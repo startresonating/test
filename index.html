@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello, World! (Fun Edition)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1 id="main-heading">Hello, World!</h1>
+        <p>Click the button for a surprise!</p>
+        <button id="myButton">Click Me!</button>
+
+        <div id="easter-egg" class="hidden">
+            <p>You found the Easter Egg! 🎉</p>
+            <img src="https://placekitten.com/200/200" alt="Cute Kitten" id="kitten-pic"> 
+            <p>(It's a cute kitten!)</p>
+        </div>
+    </div>
+
+    <script>
+        const button = document.getElementById('myButton');
+        const easterEgg = document.getElementById('easter-egg');
+        const heading = document.getElementById('main-heading');
+
+        button.addEventListener('click', () => {
+            easterEgg.classList.remove('hidden'); // Remove the 'hidden' class
+            button.textContent = "You Found It!";
+            button.disabled = true;  // Disable the button after one click
+            heading.textContent = "Hello, Wonderful World!"; // Change the heading
+        });
+    </script>
+</body>
+</html>

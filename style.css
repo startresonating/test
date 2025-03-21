@@ -1,0 +1,66 @@
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f0f0f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh; /* Use min-height for better centering */
+    margin: 0; /* Remove default body margin */
+}
+
+.container {
+    text-align: center;
+    background-color: white;
+    padding: 30px; /* Increased padding */
+    border-radius: 15px; /* Rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    max-width: 500px; /* Limit the width */
+    width: 90%;      /* Make it responsive */
+}
+
+h1 {
+    color: #333;
+    font-size: 2.5em; /* Larger font size */
+    margin-bottom: 0.5em;
+}
+
+p {
+    color: #666;
+    margin-bottom: 1em;
+}
+
+button {
+    background-color: #007bff;
+    color: white;
+    padding: 12px 24px; /* Larger button */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s ease; /* Smooth transition */
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.hidden {
+    display: none; /* Initially hide the Easter egg */
+}
+
+#easter-egg {
+    margin-top: 20px; /* Space from the button */
+    border-top: 2px dashed #ccc; /* Separator */
+    padding-top: 20px;
+}
+
+#kitten-pic {
+    border-radius: 50%; /* Circular image */
+    margin-top: 10px;
+    border: 3px solid #ddd; /* subtle border */
+}

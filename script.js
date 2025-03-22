@@ -15,6 +15,23 @@ document.addEventListener('DOMContentLoaded', () => {
     let lasers = [];
     let lastLaserTime = 0;
     let gameSpeed = 2;
+    let gwionMessageActive = false;
+    
+    // Gwion update - random messages
+    const gwionMessages = [
+        "GET IN THERE GWION!",
+        "HELL YEAH GWION!",
+        "HANG LOOSE HANG LOOSE",
+        "LET'S GOOOO!",
+        "GWION ON FIRE!",
+        "SMASHING IT GWION!",
+        "ABSOLUTELY CRUSHING IT!",
+        "GWION = GOAT!",
+        "SICK MOVES GWION!",
+        "UNSTOPPABLE GWION!",
+        "LEGENDARY GWION!",
+        "GWION TAKING FLIGHT!"
+    ];
     
     // Game constants
     const JUMP_STRENGTH = -8;
@@ -159,6 +176,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Increase game speed periodically
                 if (score % 5 === 0) {
                     gameSpeed += 0.2;
+                    
+                    // Show Gwion message every 5 lasers if not already showing one
+                    if (!gwionMessageActive) {
+                        showGwionMessage();
+                    }
                 }
             }
             
@@ -177,11 +199,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function checkCollision(laser) {
-        // Simple collision detection
-        const spaceshipLeft = 100;
-        const spaceshipRight = spaceshipLeft + SPACESHIP_WIDTH;
-        const spaceshipTop = spaceshipPosition;
-        const spaceshipBottom = spaceshipPosition + SPACESHIP_HEIGHT;
+        // Simple collision detection with 30% reduced hitbox
+        const hitboxReduction = 0.3; // 30% reduction
+        
+        // Calculate reduced hitbox dimensions
+        const hitboxWidthReduction = SPACESHIP_WIDTH * hitboxReduction / 2; // Split reduction between left and right
+        const hitboxHeightReduction = SPACESHIP_HEIGHT * hitboxReduction / 2; // Split between top and bottom
+        
+        const spaceshipLeft = 100 + hitboxWidthReduction;
+        const spaceshipRight = (100 + SPACESHIP_WIDTH) - hitboxWidthReduction;
+        const spaceshipTop = spaceshipPosition + hitboxHeightReduction;
+        const spaceshipBottom = (spaceshipPosition + SPACESHIP_HEIGHT) - hitboxHeightReduction;
         
         // Check if spaceship is within laser x-range
         if (laser.x <= spaceshipRight && laser.x + LASER_WIDTH >= spaceshipLeft) {
@@ -199,6 +227,27 @@ document.addEventListener('DOMContentLoaded', () => {
         return false;
     }
     
+    // Gwion update - show random message function
+    function showGwionMessage() {
+        gwionMessageActive = true;
+        
+        // Select random message
+        const randomIndex = Math.floor(Math.random() * gwionMessages.length);
+        const message = gwionMessages[randomIndex];
+        
+        // Create message element
+        const messageElement = document.createElement('div');
+        messageElement.className = 'gwion-message';
+        messageElement.textContent = message;
+        game.appendChild(messageElement);
+        
+        // Remove message after animation completes (2 seconds)
+        setTimeout(() => {
+            game.removeChild(messageElement);
+            gwionMessageActive = false;
+        }, 2000);
+    }
+    
     function gameOver() {
         gameRunning = false;
         finalScoreDisplay.textContent = score;
@@ -209,6 +258,11 @@ document.addEventListener('DOMContentLoaded', () => {
             game.removeChild(laser.element);
         });
         lasers = [];
+        
+        // Remove any active Gwion messages
+        const activeMessages = document.querySelectorAll('.gwion-message');
+        activeMessages.forEach(el => game.removeChild(el));
+        gwionMessageActive = false;
     }
     
     // Adjust canvas size on window resize

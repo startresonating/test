@@ -1385,7 +1385,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         endingScreen.classList.remove('hidden');
     }
-    // Event Listeners
+// Event Listeners
     if (startGameButton) {
         console.log("Adding click listener to start button");
         startGameButton.addEventListener('click', function() {
@@ -1404,6 +1404,21 @@ document.addEventListener('DOMContentLoaded', () => {
         logButton.addEventListener('click', () => {
             logModal.classList.remove('hidden');
         });
+    }
+
+    if (closeButton) {
+        closeButton.addEventListener('click', () => {
+            logModal.classList.add('hidden');
+        });
+    }
+
+    if (playAgainButton) {
+        playAgainButton.addEventListener('click', () => {
+            endingScreen.classList.add('hidden');
+            introScreen.classList.remove('hidden');
+            gameContainer.classList.add('hidden');
+        });
+    }
     }
 
     if (closeButton) {

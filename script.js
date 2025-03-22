@@ -79,49 +79,49 @@ document.addEventListener('DOMContentLoaded', () => {
         village_entrance: {
             name: "Village Entrance",
             image: "url('https://via.placeholder.com/800x400/87CEEB/333333?text=Village+Entrance')",
-            description: "A weathered wooden sign marks the entrance to the small village. Dirt paths wind between modest cottages, smoke curling from their chimneys. The sounds of daily life echo in the distance.",
+            description: "A wooden sign marks the entrance to the village. Modest cottages line dirt paths, with smoke rising from chimneys.",
             firstVisit: true
         },
         village_square: {
             name: "Village Square",
             image: "url('https://via.placeholder.com/800x400/F5DEB3/333333?text=Village+Square')",
-            description: "The heart of the village - a modest square with a central well where villagers gather throughout the day. Market stalls line one side, while a community board holds announcements.",
+            description: "The heart of the village with a central well. Villagers gather here throughout the day.",
             firstVisit: true
         },
         inn: {
             name: "The Humble Hearth Inn",
             image: "url('https://via.placeholder.com/800x400/8B4513/FFFFFF?text=Humble+Hearth+Inn')",
-            description: "A cozy two-story building with weathered wooden beams. Inside, a warm fire crackles in the hearth, and the smell of fresh bread fills the air. A few tables and chairs are scattered about.",
+            description: "A cozy building with a warm hearth and the smell of fresh bread.",
             firstVisit: true
         },
         healers_hut: {
             name: "Healer's Hut",
             image: "url('https://via.placeholder.com/800x400/556B2F/FFFFFF?text=Healer%27s+Hut')",
-            description: "A small, round hut at the village edge, surrounded by herb gardens. Bundles of dried plants hang from the ceiling inside, and the air smells of earthy remedies and fresh mint.",
+            description: "A small, round hut surrounded by herb gardens. Dried plants hang from the ceiling.",
             firstVisit: true
         },
         elder_home: {
             name: "Elder's Home",
             image: "url('https://via.placeholder.com/800x400/708090/FFFFFF?text=Elder%27s+Home')",
-            description: "The largest house in the village, though still modest. Well-maintained with carvings on the wooden beams. Inside, shelves of books and scrolls line the walls.",
+            description: "The largest house in the village. Shelves of books and scrolls line the walls.",
             firstVisit: true
         },
         farm: {
             name: "Community Farm",
             image: "url('https://via.placeholder.com/800x400/228B22/FFFFFF?text=Community+Farm')",
-            description: "Neat rows of crops stretch across fertile soil, with simple irrigation channels running between them. A few villagers work the land, and livestock graze in a nearby pen.",
+            description: "Neat rows of crops stretch across fertile soil. Villagers tend to the land nearby.",
             firstVisit: true
         },
         forest_edge: {
             name: "Forest Edge",
             image: "url('https://via.placeholder.com/800x400/006400/FFFFFF?text=Forest+Edge')",
-            description: "Ancient trees mark the boundary between the village and the wild forest beyond. The air is cooler here, filled with the sounds of birds and rustling leaves.",
+            description: "Ancient trees mark the boundary between village and wilderness. Birds call overhead.",
             firstVisit: true
         },
         river: {
             name: "Village River",
             image: "url('https://via.placeholder.com/800x400/4682B4/FFFFFF?text=Village+River')",
-            description: "A clear, flowing river that provides the village with water. A simple wooden bridge crosses its narrowest point, and a path along the bank leads to a quiet fishing spot.",
+            description: "A clear, flowing river with a wooden bridge. A path leads to a fishing spot.",
             firstVisit: true
         }
     };
@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const npcs = {
         elder: {
             name: "Elder Thaddeus",
-            description: "A tall, lean man with a long silver beard and kind eyes that miss nothing. He walks with the aid of a carved wooden staff and speaks deliberately, each word carefully chosen.",
+            description: "A tall man with a silver beard and kind, observant eyes.",
             location: "elder_home",
             schedule: {
                 Morning: "elder_home",
@@ -139,11 +139,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 Night: "elder_home"
             },
             gesture: "hand_to_heart",
-            initialInteraction: "The village elder regards you with measured curiosity. His weathered face betrays no judgment at your silence, only a patient assessment as he waits to see what kind of visitor you might be."
+            initialInteraction: "The elder studies you with measured curiosity, waiting patiently despite your silence."
         },
         innkeeper: {
             name: "Innkeeper Mara",
-            description: "A robust woman with flour-dusted hands and a throaty laugh. Her curly auburn hair is tied back, and her apron bears the stains of years of honest work.",
+            description: "A robust woman with flour-dusted hands and a hearty laugh.",
             location: "inn",
             schedule: {
                 Morning: "inn",
@@ -152,11 +152,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 Night: "inn"
             },
             gesture: "bow_with_fist_in_palm",
-            initialInteraction: "The innkeeper glances up from wiping down the counter, her eyebrows rising slightly at your silent entrance. She offers a nod of acknowledgment and gestures to an empty table, waiting to see if you'll take a seat."
+            initialInteraction: "The innkeeper glances up, nods, and gestures to an empty table."
         },
         healer: {
             name: "Healer Sylva",
-            description: "A slender person of indeterminate age with steady hands and observant eyes. Their hair is woven with small charms and beads, and they move with deliberate grace.",
+            description: "A slender person with steady hands and hair woven with small charms.",
             location: "healers_hut",
             schedule: {
                 Morning: "healers_hut",
@@ -165,11 +165,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 Night: "healers_hut"
             },
             gesture: "fingers_to_pulse",
-            initialInteraction: "The healer looks up from sorting herbs, their eyes quickly scanning you for signs of injury or illness. Finding none, their posture relaxes slightly, though their gaze remains curious and evaluating."
+            initialInteraction: "The healer scans you for injuries, then relaxes slightly, curious about your silent presence."
         },
         farmer: {
             name: "Farmer Eadric",
-            description: "A sun-bronzed man with strong shoulders and calloused hands. His face is lined from years of weather, but his smile comes easily when earned.",
+            description: "A sun-bronzed man with strong shoulders and calloused hands.",
             location: "farm",
             schedule: {
                 Morning: "farm",
@@ -178,11 +178,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 Night: "inn"
             },
             gesture: "earth_touch",
-            initialInteraction: "The farmer pauses in his work, leaning on his hoe as he studies you. Sweat glistens on his brow, and he wipes it with a forearm before giving you a cautious nod, his stance neither welcoming nor dismissive."
+            initialInteraction: "The farmer pauses his work, giving you a cautious nod."
         },
         child: {
             name: "Child Lina",
-            description: "A bright-eyed child of about ten with untidy hair and quick movements. She carries a small cloth doll and seems to notice everything around her.",
+            description: "A bright-eyed child with untidy hair and quick movements.",
             location: "village_square",
             schedule: {
                 Morning: "village_square",
@@ -191,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 Night: "elder_home"
             },
             gesture: "firefly_hands",
-            initialInteraction: "The child stops her play, staring at you with unabashed curiosity. She clutches her doll tighter and tilts her head, studying you as if you were a puzzle to solve. Unlike the adults, she seems fascinated rather than wary."
+            initialInteraction: "The child stares openly, clutching her doll as she studies you with fascination."
         }
     };
 
@@ -199,45 +199,45 @@ document.addEventListener('DOMContentLoaded', () => {
     const villageChallenges = [
         {
             name: "Drought",
-            description: "The river has shrunk to a trickle, crops are withering, and water is being strictly rationed. The village needs both immediate solutions and long-term planning.",
+            description: "The river has shrunk to a trickle, and water is being rationed.",
             signs: [
-                "Withered crops in the farm fields",
+                "Withered crops in the fields",
                 "Empty water barrels lined up near the well",
-                "Arguments over water distribution in the village square",
-                "Worried conversations about failed harvests"
+                "Arguments over water distribution",
+                "Worried talk about failed harvests"
             ],
-            insightThreshold: 40 // Insight required to notice the problem
+            insightThreshold: 40
         },
         {
             name: "Social Division",
-            description: "A recent dispute has divided the village into factions, with neighbors barely speaking to each other. The wound is fresh and both sides feel justified.",
+            description: "A recent dispute has divided the villagers into factions.",
             signs: [
-                "Tense silences when certain villagers pass each other",
-                "Hushed arguments that stop when noticed",
-                "The village square feels unnaturally empty at times",
-                "Children being kept away from former playmates"
+                "Tense silences between certain villagers",
+                "Arguments that stop when noticed",
+                "The square feels unusually empty",
+                "Children kept from former playmates"
             ],
             insightThreshold: 35
         },
         {
             name: "Recent Tragedy",
-            description: "A tragic accident has left the village in mourning. Several families lost loved ones, and the community is struggling to process their grief.",
+            description: "An accident has left the village in mourning.",
             signs: [
-                "Black cloth hanging from some doorways",
+                "Black cloth hanging from doorways",
                 "Red-rimmed eyes and subdued voices",
-                "A small memorial near the forest edge",
+                "A small memorial near the forest",
                 "The absence of music or celebration"
             ],
             insightThreshold: 30
         },
         {
             name: "Hidden Poverty",
-            description: "Behind closed doors, many villagers are struggling to make ends meet. A poor harvest, increased taxes, or economic changes have left families vulnerable.",
+            description: "Many villagers are struggling to make ends meet.",
             signs: [
                 "Thin children with patched clothing",
-                "Empty market stalls where vendors once sold",
-                "Multiple families sharing single homes",
-                "Proud faces hiding hungry stomachs"
+                "Empty market stalls",
+                "Multiple families sharing homes",
+                "Proud faces hiding hunger"
             ],
             insightThreshold: 35
         }
@@ -247,38 +247,38 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameItems = [
         {
             name: "Worn Journal",
-            description: "A leather-bound journal with most pages torn out. The remaining entries hint at a troubled past and a quest for redemption.",
-            uses: ["Read to gain insight", "Show to Elder Thaddeus", "Record observations"],
+            description: "A leather-bound journal with hints of a troubled past.",
+            uses: ["Read", "Show to Elder", "Record observations"],
             location: "elder_home",
             combinable: true,
             comboPartner: "Quill"
         },
         {
             name: "Medicinal Herbs",
-            description: "A bundle of carefully dried herbs with healing properties. They give off a soothing aroma when crushed.",
-            uses: ["Treat minor injuries", "Brew tea", "Give to someone ill"],
+            description: "Dried herbs with healing properties.",
+            uses: ["Treat injuries", "Brew tea", "Give to the ill"],
             location: "healers_hut",
             combinable: true,
             comboPartner: "Clean Water"
         },
         {
             name: "Carved Whistle",
-            description: "A simple wooden whistle carved in the shape of a bird. It produces a clear, sweet tone.",
-            uses: ["Signal for attention", "Calm animals", "Entertain children"],
+            description: "A wooden whistle shaped like a bird.",
+            uses: ["Signal", "Calm animals", "Entertain children"],
             location: "forest_edge",
             combinable: true,
             comboPartner: "Colorful String"
         },
         {
             name: "Mended Doll",
-            description: "A child's doll that has been carefully repaired. The stitching is neat but visible, telling a story of care and attention.",
-            uses: ["Return to child", "Carry as token", "Use as example of repair"],
+            description: "A child's doll with careful repairs.",
+            uses: ["Return to child", "Carry as token"],
             location: "village_square",
             combinable: false
         },
         {
             name: "Clean Water",
-            description: "A small flask of clear, clean water. A precious resource in times of drought.",
+            description: "A flask of clear water, precious in drought.",
             uses: ["Drink", "Water plants", "Clean wounds"],
             location: "river",
             combinable: true,
@@ -286,30 +286,30 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         {
             name: "Fresh Bread",
-            description: "A small loaf of freshly baked bread, still warm to the touch. The aroma is enticing.",
+            description: "A warm loaf with an enticing aroma.",
             uses: ["Eat", "Share", "Feed animals"],
             location: "inn",
             combinable: false
         },
         {
             name: "Quill",
-            description: "A well-crafted writing quill. Its nib is sharp and ready for use.",
-            uses: ["Write messages", "Draw maps", "Signal intentions"],
+            description: "A well-crafted writing quill.",
+            uses: ["Write", "Draw", "Signal"],
             location: "elder_home",
             combinable: true,
             comboPartner: "Worn Journal"
         },
         {
             name: "Colorful String",
-            description: "A length of vibrant, colored string. It could be used for crafting or as a simple marker.",
-            uses: ["Mark a path", "Tie items", "Craft with children"],
+            description: "Vibrant string for crafting or marking.",
+            uses: ["Mark path", "Tie items", "Craft"],
             location: "healers_hut",
             combinable: true,
             comboPartner: "Carved Whistle"
         },
         {
             name: "Worn Map",
-            description: "A weathered map of the surrounding area. Some locations are marked that aren't visible from the village.",
+            description: "A weathered map of the surrounding area.",
             uses: ["Navigate", "Study", "Show to Elder"],
             location: "forest_edge",
             combinable: false
@@ -320,18 +320,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const combinedItems = {
         "Worn Journal+Quill": {
             name: "Personal Chronicle",
-            description: "The journal with quill tucked into its binding - a complete tool for recording your journey and communicating complex ideas.",
-            uses: ["Write detailed messages", "Record village history", "Share your story"]
+            description: "Journal with quill - a tool for recording and communicating.",
+            uses: ["Write messages", "Record history", "Share your story"]
         },
         "Medicinal Herbs+Clean Water": {
             name: "Healing Tonic",
-            description: "A flask containing herbs steeped in clean water. The resulting tonic has stronger healing properties than either component alone.",
-            uses: ["Heal illness", "Restore strength", "Offer comfort"]
+            description: "Herbs steeped in water, with enhanced healing properties.",
+            uses: ["Heal illness", "Restore strength", "Comfort"]
         },
         "Carved Whistle+Colorful String": {
             name: "Child's Necklace",
-            description: "The whistle threaded onto the colorful string creates a wearable toy that could bring joy to a child.",
-            uses: ["Gift to child", "Use as peace offering", "Trade for information"]
+            description: "Whistle on a string - a wearable toy that brings joy.",
+            uses: ["Gift to child", "Peace offering", "Trade"]
         }
     };
 
@@ -360,8 +360,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 insight: 60,
                 patienceActions: 3
             },
-            text: "The forest suddenly feels different - time seems to slow around you. As you sit in patient observation, a sense of profound connection washes over you. The trees, the birds, the very air seems to acknowledge your presence. In this moment, you understand something beyond words.",
-            internalText: "Something has changed within me. I feel... lighter, as if a burden I didn't know I carried has been set down.",
+            text: "Time slows as you sit in patient observation. A sense of profound connection washes over you.",
+            internalText: "I feel lighter, as if a burden I didn't know I carried has been set down.",
             virtueChanges: { insight: 10, compassion: 5 },
             flag: "forestBuddhaAchieved"
         },
@@ -371,8 +371,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 compassion: 40,
                 helpActions: 2
             },
-            text: "Farmer Eadric approaches you after watching your work. He gestures to a small, unused shed near the edge of his property and mimics sleeping. His weathered face shows genuine appreciation for your help.",
-            internalText: "A place to rest, freely offered. Such a simple thing, yet it means everything when you're a stranger in a strange place.",
+            text: "Farmer Eadric approaches after watching you work. He gestures to a small shed and mimics sleeping.",
+            internalText: "A place to rest, freely offered. It means everything when you're a stranger.",
             virtueChanges: { compassion: 5 },
             flag: "shelterOffered"
         },
@@ -381,8 +381,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 sleeplessness: 70,
                 anyRelationship: 50
             },
-            text: "You wake to find someone has placed a blanket over you as you slept. A small bundle of food sits nearby - a silent gift from someone who has begun to care about your wellbeing.",
-            internalText: "I can't remember the last time someone looked after me while I slept. It feels... uncomfortable, yet somehow right.",
+            text: "You wake to find someone has placed a blanket over you. A bundle of food sits nearby.",
+            internalText: "I can't remember the last time someone looked after me. It feels both uncomfortable and right.",
             virtueChanges: { compassion: 3 },
             flag: "receivedCare"
         },
@@ -391,8 +391,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 hasItem: true,
                 insight: 30
             },
-            text: "You notice something that seems out of place - clearly belonging to someone in the village but left behind or lost. It would be easy to ignore, but returning it might build trust.",
-            internalText: "Such a small thing, easily overlooked. Yet small things can mean so much when they're important to someone.",
+            text: "You notice something out of place - clearly belonging to someone in the village.",
+            internalText: "Small things can mean so much when they're important to someone.",
             actionFlag: "foundLostItem"
         },
         brokenVow: {
@@ -401,8 +401,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 hasBrokenVow: false
             },
             occurs: false,
-            text: "A moment of crisis has arrived. Your vow of silence hangs heavy on you as the situation demands immediate action. Perhaps this is the moment where words are truly needed.",
-            internalText: "My throat tightens at the thought of breaking my vow. But what good is a vow if it causes harm? Sometimes the greatest virtue is knowing when to let go of rules.",
+            text: "A moment of crisis has arrived. Your vow of silence hangs heavy as the situation demands immediate action.",
+            internalText: "What good is a vow if it causes harm? Sometimes virtue means letting go of rules.",
             actionFlag: "vowBreakingMoment"
         }
     };
@@ -416,7 +416,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     type: "observe",
                     effect: () => {
                         updateVirtues("observe");
-                        return "You stand quietly, taking in the atmosphere of the village. People move about their daily tasks, occasionally glancing your way with curious or suspicious looks. The village is small but seems largely self-sufficient.";
+                        return "You take in the atmosphere. People move about, occasionally glancing your way with curiosity or suspicion.";
                     }
                 },
                 {
@@ -425,7 +425,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     effect: () => {
                         updateVirtues("courage");
                         changeLocation("village_square");
-                        return "You take a deep breath and step forward, officially entering the village. A few villagers pause in their activities to watch you, but most continue with their routines.";
+                        return "You step forward into the village. A few villagers pause to watch you, but most continue their routines.";
                     }
                 },
                 {
@@ -433,7 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     type: "patience",
                     effect: () => {
                         updateVirtues("patience");
-                        return "You pause at the threshold, gathering your thoughts. Your vow of silence feels both a burden and a shield as you prepare to enter this new community.";
+                        return "You pause, gathering your thoughts. Your vow feels both burden and shield as you prepare to enter.";
                     }
                 },
                 {
@@ -441,7 +441,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     type: "insight",
                     effect: () => {
                         updateVirtues("insight");
-                        return "You have nothing but the clothes on your back and the weight of your vow. Whatever life you left behind, you brought nothing physical from it.";
+                        return "You have nothing but your clothes and your vow. You brought nothing from your past life.";
                     }
                 }
             ],
@@ -451,7 +451,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     type: "observe",
                     effect: () => {
                         updateVirtues("observe");
-                        return "You watch villagers entering and leaving, carrying goods or returning from work. The rhythm of village life is becoming more apparent to you.";
+                        return "You watch villagers entering and leaving. The rhythm of village life becomes more apparent.";
                     }
                 },
                 {
@@ -459,7 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     type: "normal",
                     effect: () => {
                         changeLocation("village_square");
-                        return "You walk toward the center of the village, following the main path.";
+                        return "You walk toward the center of the village.";
                     }
                 },
                 {
@@ -469,7 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         updateVirtues("rest");
                         reduceSleeplessness(10);
                         advanceTime(1);
-                        return "You find a comfortable spot just off the path and sit, watching travelers come and go. The rest helps clear your mind.";
+                        return "You find a comfortable spot to sit and watch travelers. The rest clears your mind.";
                     }
                 },
                 {
@@ -481,7 +481,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     effect: () => {
                         updateVirtues("help");
                         increaseVillageMorale(3);
-                        return "You notice debris and stones cluttering the village entrance and spend time clearing the path. A few passersby nod appreciatively at your work.";
+                        return "You clear debris from the path. A few passersby nod appreciatively at your work.";
                     }
                 }
             ]
@@ -493,7 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     type: "observe",
                     effect: () => {
                         updateVirtues("observe");
-                        return "The square is the beating heart of village life. Children play, elders chat on benches, and traders display their modest wares. You notice subtle social dynamics at play.";
+                        return "The square bustles with activity. Children play, elders chat, and traders display their wares.";
                     }
                 },
                 {
@@ -503,20 +503,20 @@ document.addEventListener('DOMContentLoaded', () => {
                         updateVirtues("rest");
                         reduceSleeplessness(5);
                         advanceTime(1);
-                        return "You find an empty bench and sit, taking in the sights and sounds of the village center. After a while, people seem to grow more accustomed to your presence.";
+                        return "You sit and take in the village center. People gradually grow accustomed to your presence.";
                     }
                 },
                 {
                     text: "Help an elderly villager",
                     type: "help",
                     requirements: {
-                        random: 0.6 // 60% chance this appears
+                        random: 0.6
                     },
                     effect: () => {
                         updateVirtues("help");
                         increaseVillageMorale(2);
                         increaseNPCRelationship("elder", 3);
-                        return "You notice an elderly person struggling with their packages. Without a word, you step forward and offer assistance, receiving a grateful smile in return.";
+                        return "You assist an elderly person with their packages, receiving a grateful smile in return.";
                     }
                 },
                 {
@@ -526,9 +526,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         updateVirtues("express");
                         if (Math.random() > 0.7) {
                             increaseNPCRelationship("child", 2);
-                            return "You smile gently at a passing child. After a moment of shy hesitation, they smile back, their curiosity piqued by the silent stranger.";
+                            return "You smile at a child who, after hesitation, smiles back with curiosity.";
                         } else {
-                            return "You smile at a passing child, but they quickly hide behind their parent, regarding you with cautious eyes.";
+                            return "You smile at a child, but they hide behind their parent, watching cautiously.";
                         }
                     }
                 }
@@ -544,16 +544,16 @@ document.addEventListener('DOMContentLoaded', () => {
             type: "observe",
             effect: () => {
                 updateVirtues("observe");
-                const insightBonus = Math.floor(gameState.insight / 20); // 0-5 bonus based on current Insight
+                const insightBonus = Math.floor(gameState.insight / 20);
                 const perceptionDetail = getPerceptionDetail(gameState.insight);
                 
                 // Check for village challenge signs if insight is high enough
                 if (gameState.insight >= gameState.villageChallenge.insightThreshold && !gameState.storyFlags.challengeNoticed) {
                     gameState.storyFlags.challengeNoticed = true;
-                    return `As you observe your surroundings, ${perceptionDetail} ${gameState.villageChallenge.signs[Math.floor(Math.random() * gameState.villageChallenge.signs.length)]}. This seems significant.`;
+                    return `As you observe, ${perceptionDetail} ${gameState.villageChallenge.signs[Math.floor(Math.random() * gameState.villageChallenge.signs.length)]}. This seems significant.`;
                 }
                 
-                return `You take a moment to carefully observe your surroundings. ${perceptionDetail} You notice details that might have otherwise escaped your attention.`;
+                return `You observe your surroundings. ${perceptionDetail} You notice details others might miss.`;
             }
         },
         wait: {
@@ -562,16 +562,15 @@ document.addEventListener('DOMContentLoaded', () => {
             effect: () => {
                 updateVirtues("patience");
                 advanceTime(1);
-                increaseNPCRelationship(getRandomNPC(), 1); // Patience slightly improves a random relationship
+                increaseNPCRelationship(getRandomNPC(), 1);
                 
-                return "You stand quietly, practicing patience. The world continues around you, and there's a certain peace in simply being present without acting.";
+                return "You stand quietly, practicing patience. There's peace in simply being present.";
             }
         },
         move: {
             text: "Go elsewhere",
             type: "normal",
             effect: () => {
-                // Will be handled by the UI to show location options
                 return "You decide to move to another location.";
             }
         },
@@ -583,7 +582,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 reduceSleeplessness(15);
                 advanceTime(1);
                 
-                return "You find a comfortable spot and allow yourself to rest. Your body relaxes, and your mind clears somewhat.";
+                return "You find a comfortable spot to rest. Your body relaxes and your mind clears.";
             }
         }
     };
@@ -600,9 +599,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (insight < 50) {
             return "You notice subtle movements and expressions.";
         } else if (insight < 70) {
-            return "Your keen observation reveals hidden patterns and unspoken tensions.";
+            return "You perceive hidden patterns and unspoken tensions.";
         } else {
-            return "With remarkable clarity, you perceive the intricate web of relationships and emotions.";
+            return "You clearly see the intricate web of relationships and emotions.";
         }
     }
 
@@ -686,23 +685,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gameState.sleeplessness > 70 && Math.random() < 0.3) {
             // Trigger a hallucination
             const hallucinations = [
-                "For a moment, the world shifts around you. You see a familiar face in the crowd, but when you look again, they're gone.",
-                "Your vision blurs, and you suddenly recall a fragment of memory - voices arguing, a decision made in anger.",
-                "The ground seems to sway beneath your feet, and you hear distant whispers calling your name.",
-                "You blink, and for an instant, your hands appear covered in something dark. When you look again, they're clean."
+                "You see a familiar face in the crowd, but when you look again, they're gone.",
+                "A fragment of memory flashes—voices arguing, a decision made in anger.",
+                "The ground seems to sway as you hear distant whispers calling your name.",
+                "For an instant, your hands appear covered in something dark, then clean again."
             ];
             
             updateNarrativeText(hallucinations[Math.floor(Math.random() * hallucinations.length)]);
-            updateInternalMonologue("My mind is playing tricks on me. I need to rest soon.");
+            updateInternalMonologue("My mind plays tricks. I need rest soon.");
         }
         
         if (gameState.sleeplessness >= 100) {
             // Force sleep
-            updateNarrativeText("Exhaustion finally overwhelms you. Your vision darkens as you collapse, consciousness slipping away.");
+            updateNarrativeText("Exhaustion overwhelms you. You collapse as consciousness slips away.");
             updateInternalMonologue("I can't... stay... awake...");
             
             // Advance time and reduce sleeplessness
-            advanceTime(2); // Force advance 2 time units
+            advanceTime(2);
             reduceSleeplessness(70);
             
             // Potential negative consequences
@@ -793,15 +792,15 @@ document.addEventListener('DOMContentLoaded', () => {
         let encounterText = "";
         
         if (relationship < -50) {
-            encounterText = `${npc.name} sees you and deliberately changes direction, avoiding your presence.`;
+            encounterText = `${npc.name} sees you and deliberately changes direction, avoiding you.`;
         } else if (relationship < 0) {
-            encounterText = `${npc.name} gives you a wary glance, clearly still unsure about your presence in the village.`;
+            encounterText = `${npc.name} gives you a wary glance, still unsure about your presence.`;
         } else if (relationship < 30) {
-            encounterText = `${npc.name} acknowledges you with a small nod, neither friendly nor hostile.`;
+            encounterText = `${npc.name} acknowledges you with a small nod.`;
         } else if (relationship < 70) {
-            encounterText = `${npc.name} offers you a genuine smile of greeting as your paths cross.`;
+            encounterText = `${npc.name} offers you a genuine smile of greeting.`;
         } else {
-            encounterText = `${npc.name}'s face brightens upon seeing you, and they approach with warm familiarity.`;
+            encounterText = `${npc.name}'s face brightens upon seeing you, approaching with warm familiarity.`;
         }
         
         updateNarrativeText(encounterText);
@@ -856,7 +855,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (item1.comboPartner === item2.name || item2.comboPartner === item1.name) {
                 // These items can be combined!
                 if (gameState.insight >= 50) {
-                    updateInternalMonologue("I wonder if these two items could be used together somehow...");
+                    updateInternalMonologue("I wonder if these two items could be used together...");
                     return true;
                 }
             }
@@ -998,24 +997,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalVirtue = gameState.compassion + gameState.insight + gameState.courage;
         
         const lowVirtueThoughts = [
-            "Why am I even doing this? These people don't care about me.",
-            "This silence is maddening. What's the point of any of this?",
+            "Why am I doing this? These people don't care about me.",
+            "This silence is maddening. What's the point?",
             "I feel empty, like my actions mean nothing.",
             "I could just leave. No one would notice or care."
         ];
         
         const mediumVirtueThoughts = [
-            "There's something to be learned here, if I'm patient enough.",
-            "Words aren't always necessary. Sometimes action is enough.",
-            "This village has its own rhythm. I'm beginning to understand it.",
+            "There's something to learn here if I'm patient.",
+            "Sometimes action speaks more than words.",
+            "This village has its own rhythm. I'm beginning to understand.",
             "My past doesn't define me. My actions here do."
         ];
         
         const highVirtueThoughts = [
-            "Every small act of kindness ripples outward in ways we can't see.",
-            "In silence, I hear truths that words often obscure.",
-            "There's a profound peace in simply being present, here and now.",
-            "The path to redemption isn't a straight line, but I'm finding my way."
+            "Every small kindness ripples outward.",
+            "In silence, I hear truths that words often hide.",
+            "There's profound peace in being present.",
+            "The path to redemption isn't straight, but I'ing my way."
         ];
         
         let thoughtPool;
@@ -1029,18 +1028,18 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Sometimes add thoughts related to sleeplessness
         if (gameState.sleeplessness > 50 && Math.random() < 0.3) {
-            updateInternalMonologue("My thoughts are foggy. I need to rest soon before exhaustion overtakes me.");
+            updateInternalMonologue("My thoughts are foggy. I need rest soon.");
             return;
         }
         
         // Action-specific thoughts override random ones sometimes
         if (actionType === "help" && Math.random() < 0.5) {
-            updateInternalMonologue("Helping feels... right. Maybe this is part of why I'm here.");
+            updateInternalMonologue("Helping feels right. Maybe this is why I'm here.");
             return;
         }
         
         if (actionType === "observe" && gameState.insight > 50) {
-            updateInternalMonologue("I'm seeing patterns now that were invisible to me before. My silence has sharpened my other senses.");
+            updateInternalMonologue("I see patterns now that were invisible before. Silence has sharpened my senses.");
             return;
         }
         
@@ -1086,7 +1085,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const lastButtonIndex = Math.min(options.length, actionButtons.length - 1);
         actionButtons[lastButtonIndex].textContent = "Stay here";
         actionButtons[lastButtonIndex].onclick = () => {
-            updateNarrativeText("You decide to remain where you are for now.");
+            updateNarrativeText("You decide to remain where you are.");
             updateAvailableActions();
         };
     }
@@ -1111,7 +1110,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Special handling for excessive sleeplessness at day end
         if (gameState.sleeplessness > 80) {
             reduceSleeplessness(30); // Forced rest overnight
-            updateNarrativeText("Exhaustion claims you as night falls. Your sleep is troubled by strange dreams and fragments of memory.");
+            updateNarrativeText("Exhaustion claims you as night falls. Your sleep is troubled by strange dreams.");
         } else {
             reduceSleeplessness(20); // Normal overnight recovery
         }
@@ -1130,27 +1129,25 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // New day message
         if (gameState.day === 7) {
-// New day message
-        if (gameState.day === 7) {
-            updateNarrativeText("You wake to the dawn of your seventh and final day in the village. There's a weight to the air, a sense that choices made today will shape your ultimate legacy here.");
-            updateInternalMonologue("My time here draws to a close. What mark will I leave on this place? And what will it leave on me?");
+            updateNarrativeText("You wake to your seventh and final day. There's a sense that today's choices will shape your legacy.");
+            updateInternalMonologue("My time here draws to a close. What mark will I leave?");
         } else {
-            updateNarrativeText(`A new day dawns in the village. You wake to the sounds of early morning activity as the village comes to life for Day ${gameState.day}.`);
+            updateNarrativeText(`A new day dawns in the village. Activity begins for Day ${gameState.day}.`);
             
             // Dynamic internal monologue based on progress
             if (gameState.villageMorale < 30) {
-                updateInternalMonologue("There's a heaviness in the air. My presence here doesn't seem to be helping.");
+                updateInternalMonologue("There's a heaviness in the air. My presence isn't helping.");
             } else if (gameState.villageMorale > 70) {
-                updateInternalMonologue("There's a warmth in the way people move today. Perhaps I'm making a difference here.");
+                updateInternalMonologue("There's warmth in how people move today. Perhaps I'm making a difference.");
             } else {
-                updateInternalMonologue("Another day of silence stretches before me. What will I learn today?");
+                updateInternalMonologue("Another day of silence stretches before me.");
             }
         }
         
         // Check for special events
         checkForSpecialEvents();
         
-        // Move to morning position (usually home base or village square)
+        // Move to morning position
         changeLocation("village_square");
     }
 
@@ -1273,7 +1270,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (totalVirtue > 200) {
             // Good outcome
-            updateNarrativeText("Your voice emerges, rough with disuse but firm with conviction. The simple truth you speak seems to hang in the air, powerful in its rarity. The effect is immediate and profound.");
+            updateNarrativeText("Your voice emerges, rough but firm. The truth you speak hangs in the air, powerful in its rarity.");
             updateInternalMonologue("There is a time for silence and a time for speech. I chose well.");
             
             // Positive effects
@@ -1284,8 +1281,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         } else {
             // Negative outcome
-            updateNarrativeText("Words spill from your lips, breaking your sacred vow. In the moment of crisis, your voice fails you, coming out wrong, conveying the opposite of your intention. The damage is immediate and obvious.");
-            updateInternalMonologue("I broke my vow for nothing. The weight of this failure is crushing.");
+            updateNarrativeText("Words spill from your lips, breaking your vow. Your voice fails you, coming out wrong.");
+            updateInternalMonologue("I broke my vow for nothing. The weight of failure is crushing.");
             
             // Negative effects
             gameState.compassion -= 15;
@@ -1303,8 +1300,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function maintainVow() {
-        updateNarrativeText("Despite the overwhelming urge to speak, you maintain your vow of silence. You find other ways to communicate what needs to be said - through gesture, expression, and meaningful action.");
-        updateInternalMonologue("The hardest silence to maintain is often the most meaningful. I remain true to my path.");
+        updateNarrativeText("Despite the urge to speak, you maintain your silence. You find other ways to communicate.");
+        updateInternalMonologue("The hardest silence is often the most meaningful. I remain true to my path.");
         
         // Positive effects for maintaining discipline
         gameState.insight += 10;
@@ -1356,7 +1353,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-function endGame() {
+    function endGame() {
         gameState.gameEnded = true;
         
         // Determine ending based on final state
@@ -1365,16 +1362,16 @@ function endGame() {
         
         if (totalVirtue > 250 && gameState.villageMorale > 80) {
             // Best ending
-            endingText = "Your week of silence ends in a ceremony led by Elder Thaddeus. The entire village gathers, offering heartfelt gifts and tokens of respect. As you prepare to leave, a rare offer is made - a place among them, should you ever wish to return. Though your vow of silence ends today, the lessons learned will speak within you forever.";
+            endingText = "Your week ends with a ceremony led by Elder Thaddeus. The village offers gifts and respect. As you prepare to leave, they invite you to return someday. Though your vow ends today, the lessons will speak within you forever.";
         } else if (totalVirtue > 200 || gameState.villageMorale > 70) {
             // Good ending
-            endingText = "As your time in the village comes to a close, you find yourself changed. The silent days have given you perspective, and your actions have left the village better than you found it. Whatever path led you here, you now walk forward with greater purpose and peace.";
+            endingText = "As your time in the village ends, you  yourself changed. The silent days gave you perspective, and your actions left the village better than you found it. You walk forward with greater purpose.";
         } else if (totalVirtue > 120 || gameState.villageMorale > 40) {
             // Neutral ending
-            endingText = "Your week of silence comes to a quiet end. Some villagers bid you farewell, while others merely observe your departure. The experience has taught you something, though what lessons you'll carry forward remains to be seen.";
+            endingText = "Your week of silence ends quietly. Some bid you farewell, others simply observe. The experience taught you something, though what lessons you'll carry forward remains to be seen.";
         } else {
             // Bad ending
-            endingText = "You slip away from the village before dawn on the seventh day, leaving as quietly as you arrived. Your presence brought little comfort to this place, and your vow of silence feels more like a burden than a path to wisdom. Perhaps redemption awaits elsewhere.";
+            endingText = "You slip away before dawn on the seventh day, leaving as quietly as you arrived. Your presence brought little comfort here, and your vow feels more burden than wisdom. Perhaps redemption awaits elsewhere.";
         }
         
         // Display ending
@@ -1484,8 +1481,8 @@ function endGame() {
         changeLocation('village_entrance');
         
         // First-time game message
-        updateNarrativeText("A weathered wooden sign marks the entrance to the small village. Dirt paths wind between modest cottages, smoke curling from their chimneys. The sounds of daily life echo in the distance.");
-        updateInternalMonologue("My vow of silence weighs heavily, but it's a burden I've chosen to bear. Perhaps in this place, I'll find what I'm seeking.");
+        updateNarrativeText("A weathered sign marks the entrance to the small village. Paths wind between cottages, smoke curling from chimneys.");
+        updateInternalMonologue("My vow of silence weighs heavily, but it's a burden I've chosen. Perhaps here, I'll find what I seek.");
     }
 
     // Note: We don't need to initialize the game here as that's handled by the start button event

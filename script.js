@@ -1,1489 +1,1129 @@
-document.addEventListener('DOMContentLoaded', () => {
-    console.log("DOM content loaded");
+// Game initialization
+window.addEventListener('load', function() {
+    // Prevent scrolling
+    document.body.addEventListener('touchmove', function(e) {
+        if (e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'INPUT') {
+            e.preventDefault();
+        }
+    }, { passive: false });
     
-    // DOM Elements
-    const introScreen = document.getElementById('intro-screen');
-    const startGameButton = document.getElementById('start-game');
-    const gameContainer = document.getElementById('game-container');
-    const dayDisplay = document.getElementById('day-display');
-    const timeDisplay = document.getElementById('time-display');
-    const logButton = document.getElementById('log-button');
-    const locationImage = document.getElementById('location-image');
-    const narrativeText = document.getElementById('narrative-text');
-    const internalMonologue = document.getElementById('internal-monologue');
-    const actionButtons = Array.from(document.querySelectorAll('.action-button'));
-    const logModal = document.getElementById('log-modal');
-    const logEntries = document.getElementById('log-entries');
-    const closeButton = document.querySelector('.close-button');
-    const endingScreen = document.getElementById('ending-screen');
-    const endingText = document.getElementById('ending-text');
-    const playAgainButton = document.getElementById('play-again');
-    const itemNotification = document.getElementById('item-notification');
-    const itemMessage = document.getElementById('item-message');
-
-    // Game State
-    let gameState = {
-        // Time & Progress
-        day: 1,
-        timeUnit: 0, // 0: Morning, 1: Afternoon, 2: Evening, 3: Night
-        timeUnits: ['Morning', 'Afternoon', 'Evening', 'Night'],
-        location: 'village_entrance',
-        
-        // Player Stats
-        compassion: 20,
-        insight: 20, 
-        courage: 20,
-        perceptionScore: 15,
-        sleeplessness: 0,
-        
-        // Items & Gestures
-        items: [],
-        learnedGestures: [],
-        
-        // Village & NPCs
-        villageChallenge: null,
-        villageMorale: 50,
-        npcRelationships: {
-            elder: 0,
-            innkeeper: 0,
-            healer: 0,
-            farmer: 0,
-            child: 0
-        },
-        npcMoods: {
-            elder: 'neutral',
-            innkeeper: 'neutral',
-            healer: 'neutral',
-            farmer: 'neutral',
-            child: 'neutral'
-        },
-        
-        // Events & Logs
-        logEntries: [],
-        hasBrokenVow: false,
-        gameEnded: false,
-        
-        // Daily Virtue Changes
-        dailyVirtueChanges: {
-            compassion: 0,
-            insight: 0,
-            courage: 0
-        },
-        
-        // Core Story Flags
-        storyFlags: {}
+    // Game constants
+    const CANVAS = document.getElementById('game-canvas');
+    const CTX = CANVAS.getContext('2d');
+    const GRAVITY = 0.2;
+    const FRICTION = 0.98;
+    const MAX_POWER = 15;
+    
+    // Game variables
+    let width, height;
+    let gameState = 'start';
+    let selectedDifficulty = 1;
+    let currentLevel = 1;
+    let score = 0;
+    let lives = 3;
+    let combo = 0;
+    let targetCount = 0;
+    let hitsRequired = 0;
+    let levelStartTime = 0;
+    let animationFrameId = null;
+    
+    // Game objects
+    let player = null;
+    let obstacles = [];
+    let targets = [];
+    let particles = [];
+    let powerUps = [];
+    
+    // Input tracking
+    let touchStart = { x: 0, y: 0 };
+    let touchEnd = { x: 0, y: 0 };
+    let isDragging = false;
+    
+    // Game effects
+    let screenShake = 0;
+    let slowMotion = 0;
+    
+    // Audio effects (preload sounds)
+    const sounds = {
+        bounce: new Audio('data:audio/mp3;base64,SUQzAwAAAAAAJlRQRTEAAAAcAAAAU291bmRKYXkuY29tIFNvdW5kIEVmZmVjdHMA//uSwAAAAAABLBQAAAL6QWwrFAAEgAAAAB+8AAAABBmqqqICL/9RZ30fxoc6P/SDI/0kf0kWEv//8sIxMTExMTEAAAAA'),
+        hit: new Audio('data:audio/mp3;base64,SUQzAwAAAAAAJlRQRTEAAAAcAAAAU291bmRKYXkuY29tIFNvdW5kIEVmZmVjdHMA//uSwAAAAAABLBQAAAL6QZFj4AAEgAAAAAOAAAAABP/jjBf///yk+yL/Kbqt02KqXfr///xMTExMTExMQ=='),
+        powerup: new Audio('data:audio/mp3;base64,SUQzAwAAAAAAJlRQRTEAAAAcAAAAU291bmRKYXkuY29tIFNvdW5kIEVmZmVjdHMA//uSwAAAAAABLBQAAAL6QrMhAgAEgAAAAAOAAAAABJkGf/6n/X//8+xz4p9qs0+vaPv//+JiYmJiYmJi'),
+        levelComplete: new Audio('data:audio/mp3;base64,SUQzAwAAAAAAJlRQRTEAAAAcAAAAU291bmRKYXkuY29tIFNvdW5kIEVmZmVjdHMA//uSwAAAAAABLBQAAAL6QrsoAgAEgAAAAAOAAAAABOobjf6h/+t//1dUKyqsNPVEb///ExMTExMTExM='),
+        gameOver: new Audio('data:audio/mp3;base64,SUQzAwAAAAAAJlRQRTEAAAAcAAAAU291bmRKYXkuY29tIFNvdW5kIEVmZmVjdHMA//uSwAAAAAABLBQAAAL6QrZLGAAEgAAAAAOAAAAABIGjWf+WV///xKNh3pCE1wL7///ExMTExMTExM=')
     };
-
-    // Location data - image URLs and descriptions
-    const locations = {
-        village_entrance: {
-            name: "Village Entrance",
-            image: "url('https://via.placeholder.com/800x400/87CEEB/333333?text=Village+Entrance')",
-            description: "A wooden sign marks the entrance to the village. Modest cottages line dirt paths, with smoke rising from chimneys.",
-            firstVisit: true
-        },
-        village_square: {
-            name: "Village Square",
-            image: "url('https://via.placeholder.com/800x400/F5DEB3/333333?text=Village+Square')",
-            description: "The heart of the village with a central well. Villagers gather here throughout the day.",
-            firstVisit: true
-        },
-        inn: {
-            name: "The Humble Hearth Inn",
-            image: "url('https://via.placeholder.com/800x400/8B4513/FFFFFF?text=Humble+Hearth+Inn')",
-            description: "A cozy building with a warm hearth and the smell of fresh bread.",
-            firstVisit: true
-        },
-        healers_hut: {
-            name: "Healer's Hut",
-            image: "url('https://via.placeholder.com/800x400/556B2F/FFFFFF?text=Healer%27s+Hut')",
-            description: "A small, round hut surrounded by herb gardens. Dried plants hang from the ceiling.",
-            firstVisit: true
-        },
-        elder_home: {
-            name: "Elder's Home",
-            image: "url('https://via.placeholder.com/800x400/708090/FFFFFF?text=Elder%27s+Home')",
-            description: "The largest house in the village. Shelves of books and scrolls line the walls.",
-            firstVisit: true
-        },
-        farm: {
-            name: "Community Farm",
-            image: "url('https://via.placeholder.com/800x400/228B22/FFFFFF?text=Community+Farm')",
-            description: "Neat rows of crops stretch across fertile soil. Villagers tend to the land nearby.",
-            firstVisit: true
-        },
-        forest_edge: {
-            name: "Forest Edge",
-            image: "url('https://via.placeholder.com/800x400/006400/FFFFFF?text=Forest+Edge')",
-            description: "Ancient trees mark the boundary between village and wilderness. Birds call overhead.",
-            firstVisit: true
-        },
-        river: {
-            name: "Village River",
-            image: "url('https://via.placeholder.com/800x400/4682B4/FFFFFF?text=Village+River')",
-            description: "A clear, flowing river with a wooden bridge. A path leads to a fishing spot.",
-            firstVisit: true
+    
+    // Mute sounds initially
+    let soundsEnabled = true;
+    
+    function playSFX(sound) {
+        if (soundsEnabled) {
+            const sfx = sounds[sound];
+            if (sfx) {
+                sfx.currentTime = 0;
+                sfx.play().catch(error => console.log("Audio play error:", error));
+            }
         }
-    };
-
-    // NPCs
-    const npcs = {
-        elder: {
-            name: "Elder Thaddeus",
-            description: "A tall man with a silver beard and kind, observant eyes.",
-            location: "elder_home",
-            schedule: {
-                Morning: "elder_home",
-                Afternoon: "village_square",
-                Evening: "elder_home",
-                Night: "elder_home"
-            },
-            gesture: "hand_to_heart",
-            initialInteraction: "The elder studies you with measured curiosity, waiting patiently despite your silence."
-        },
-        innkeeper: {
-            name: "Innkeeper Mara",
-            description: "A robust woman with flour-dusted hands and a hearty laugh.",
-            location: "inn",
-            schedule: {
-                Morning: "inn",
-                Afternoon: "inn",
-                Evening: "inn",
-                Night: "inn"
-            },
-            gesture: "bow_with_fist_in_palm",
-            initialInteraction: "The innkeeper glances up, nods, and gestures to an empty table."
-        },
-        healer: {
-            name: "Healer Sylva",
-            description: "A slender person with steady hands and hair woven with small charms.",
-            location: "healers_hut",
-            schedule: {
-                Morning: "healers_hut",
-                Afternoon: "healers_hut",
-                Evening: "healers_hut",
-                Night: "healers_hut"
-            },
-            gesture: "fingers_to_pulse",
-            initialInteraction: "The healer scans you for injuries, then relaxes slightly, curious about your silent presence."
-        },
-        farmer: {
-            name: "Farmer Eadric",
-            description: "A sun-bronzed man with strong shoulders and calloused hands.",
-            location: "farm",
-            schedule: {
-                Morning: "farm",
-                Afternoon: "farm",
-                Evening: "village_square",
-                Night: "inn"
-            },
-            gesture: "earth_touch",
-            initialInteraction: "The farmer pauses his work, giving you a cautious nod."
-        },
-        child: {
-            name: "Child Lina",
-            description: "A bright-eyed child with untidy hair and quick movements.",
-            location: "village_square",
-            schedule: {
-                Morning: "village_square",
-                Afternoon: "forest_edge",
-                Evening: "village_square",
-                Night: "elder_home"
-            },
-            gesture: "firefly_hands",
-            initialInteraction: "The child stares openly, clutching her doll as she studies you with fascination."
+    }
+    
+    // Set up canvas and game area
+    function setupCanvas() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        CANVAS.width = width;
+        CANVAS.height = height;
+    }
+    
+    // Handle window resize
+    window.addEventListener('resize', function() {
+        setupCanvas();
+        if (player) player.resetPosition();
+    });
+    
+    // UI Element Selectors
+    const startScreen = document.getElementById('start-screen');
+    const gameOverScreen = document.getElementById('game-over-screen');
+    const levelCompleteScreen = document.getElementById('level-complete-screen');
+    const pauseScreen = document.getElementById('pause-screen');
+    const startButton = document.getElementById('start-button');
+    const restartButton = document.getElementById('restart-button');
+    const menuButtonGameover = document.getElementById('menu-button-gameover');
+    const menuButtonPause = document.getElementById('menu-button-pause');
+    const nextLevelButton = document.getElementById('next-level-button');
+    const resumeButton = document.getElementById('resume-button');
+    const pauseButton = document.getElementById('pause-button');
+    const difficultyButtons = document.querySelectorAll('.difficulty-button');
+    const scoreDisplay = document.getElementById('score');
+    const levelDisplay = document.getElementById('level');
+    const finalScore = document.getElementById('final-score');
+    const finalLevel = document.getElementById('final-level');
+    const levelScore = document.getElementById('level-score');
+    const levelTime = document.getElementById('level-time');
+    const levelBonus = document.getElementById('level-bonus');
+    const progressBar = document.getElementById('progress-bar');
+    const livesContainer = document.getElementById('lives-container');
+    const levelIndicator = document.getElementById('level-indicator');
+    const comboIndicator = document.getElementById('combo-indicator');
+    const powerUpIndicator = document.getElementById('power-up-indicator');
+    
+    // Game UI handling
+    function showScreen(screen) {
+        startScreen.classList.remove('active');
+        gameOverScreen.classList.remove('active');
+        levelCompleteScreen.classList.remove('active');
+        pauseScreen.classList.remove('active');
+        
+        if (screen === 'start') {
+            startScreen.classList.add('active');
+        } else if (screen === 'game-over') {
+            gameOverScreen.classList.add('active');
+        } else if (screen === 'level-complete') {
+            levelCompleteScreen.classList.add('active');
+        } else if (screen === 'pause') {
+            pauseScreen.classList.add('active');
         }
-    };
-
-    // Village Challenges
-    const villageChallenges = [
-        {
-            name: "Drought",
-            description: "The river has shrunk to a trickle, and water is being rationed.",
-            signs: [
-                "Withered crops in the fields",
-                "Empty water barrels lined up near the well",
-                "Arguments over water distribution",
-                "Worried talk about failed harvests"
-            ],
-            insightThreshold: 40
-        },
-        {
-            name: "Social Division",
-            description: "A recent dispute has divided the villagers into factions.",
-            signs: [
-                "Tense silences between certain villagers",
-                "Arguments that stop when noticed",
-                "The square feels unusually empty",
-                "Children kept from former playmates"
-            ],
-            insightThreshold: 35
-        },
-        {
-            name: "Recent Tragedy",
-            description: "An accident has left the village in mourning.",
-            signs: [
-                "Black cloth hanging from doorways",
-                "Red-rimmed eyes and subdued voices",
-                "A small memorial near the forest",
-                "The absence of music or celebration"
-            ],
-            insightThreshold: 30
-        },
-        {
-            name: "Hidden Poverty",
-            description: "Many villagers are struggling to make ends meet.",
-            signs: [
-                "Thin children with patched clothing",
-                "Empty market stalls",
-                "Multiple families sharing homes",
-                "Proud faces hiding hunger"
-            ],
-            insightThreshold: 35
+    }
+    
+    // Event Listeners for UI
+    startButton.addEventListener('click', startGame);
+    restartButton.addEventListener('click', restartGame);
+    menuButtonGameover.addEventListener('click', goToMainMenu);
+    menuButtonPause.addEventListener('click', goToMainMenu);
+    nextLevelButton.addEventListener('click', startNextLevel);
+    resumeButton.addEventListener('click', resumeGame);
+    pauseButton.addEventListener('click', pauseGame);
+    
+    difficultyButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            difficultyButtons.forEach(btn => btn.classList.remove('selected'));
+            this.classList.add('selected');
+            selectedDifficulty = parseInt(this.getAttribute('data-difficulty'));
+        });
+    });
+    
+    // Touch and mouse event handlers
+    CANVAS.addEventListener('mousedown', handleDragStart);
+    CANVAS.addEventListener('mousemove', handleDragMove);
+    CANVAS.addEventListener('mouseup', handleDragEnd);
+    CANVAS.addEventListener('touchstart', handleTouchStart);
+    CANVAS.addEventListener('touchmove', handleTouchMove);
+    CANVAS.addEventListener('touchend', handleTouchEnd);
+    
+    function handleDragStart(e) {
+        if (gameState !== 'playing' || !player.canLaunch) return;
+        isDragging = true;
+        touchStart.x = e.clientX || e.touches[0].clientX;
+        touchStart.y = e.clientY || e.touches[0].clientY;
+        touchEnd.x = touchStart.x;
+        touchEnd.y = touchStart.y;
+    }
+    
+    function handleDragMove(e) {
+        if (!isDragging) return;
+        touchEnd.x = e.clientX || e.touches[0].clientX;
+        touchEnd.y = e.clientY || e.touches[0].clientY;
+    }
+    
+    function handleDragEnd() {
+        if (!isDragging) return;
+        isDragging = false;
+        
+        // Calculate direction and power
+        const dx = touchStart.x - touchEnd.x;
+        const dy = touchStart.y - touchEnd.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const power = Math.min(distance / 10, MAX_POWER);
+        
+        // Launch player
+        if (power > 1 && player.canLaunch) {
+            player.vx = dx / 10 * (0.7 + 0.3 * selectedDifficulty);
+            player.vy = dy / 10 * (0.7 + 0.3 * selectedDifficulty);
+            player.canLaunch = false;
+            player.isLaunched = true;
+            
+            // Play launch sound
+            playSFX('bounce');
+            
+            // Add launch particles
+            createParticles(player.x, player.y, 15, player.color, 2, 30);
         }
-    ];
-
-    // Items available in the game
-    const gameItems = [
-        {
-            name: "Worn Journal",
-            description: "A leather-bound journal with hints of a troubled past.",
-            uses: ["Read", "Show to Elder", "Record observations"],
-            location: "elder_home",
-            combinable: true,
-            comboPartner: "Quill"
-        },
-        {
-            name: "Medicinal Herbs",
-            description: "Dried herbs with healing properties.",
-            uses: ["Treat injuries", "Brew tea", "Give to the ill"],
-            location: "healers_hut",
-            combinable: true,
-            comboPartner: "Clean Water"
-        },
-        {
-            name: "Carved Whistle",
-            description: "A wooden whistle shaped like a bird.",
-            uses: ["Signal", "Calm animals", "Entertain children"],
-            location: "forest_edge",
-            combinable: true,
-            comboPartner: "Colorful String"
-        },
-        {
-            name: "Mended Doll",
-            description: "A child's doll with careful repairs.",
-            uses: ["Return to child", "Carry as token"],
-            location: "village_square",
-            combinable: false
-        },
-        {
-            name: "Clean Water",
-            description: "A flask of clear water, precious in drought.",
-            uses: ["Drink", "Water plants", "Clean wounds"],
-            location: "river",
-            combinable: true,
-            comboPartner: "Medicinal Herbs"
-        },
-        {
-            name: "Fresh Bread",
-            description: "A warm loaf with an enticing aroma.",
-            uses: ["Eat", "Share", "Feed animals"],
-            location: "inn",
-            combinable: false
-        },
-        {
-            name: "Quill",
-            description: "A well-crafted writing quill.",
-            uses: ["Write", "Draw", "Signal"],
-            location: "elder_home",
-            combinable: true,
-            comboPartner: "Worn Journal"
-        },
-        {
-            name: "Colorful String",
-            description: "Vibrant string for crafting or marking.",
-            uses: ["Mark path", "Tie items", "Craft"],
-            location: "healers_hut",
-            combinable: true,
-            comboPartner: "Carved Whistle"
-        },
-        {
-            name: "Worn Map",
-            description: "A weathered map of the surrounding area.",
-            uses: ["Navigate", "Study", "Show to Elder"],
-            location: "forest_edge",
-            combinable: false
+    }
+    
+    function handleTouchStart(e) {
+        e.preventDefault();
+        handleDragStart(e.touches[0]);
+    }
+    
+    function handleTouchMove(e) {
+        e.preventDefault();
+        handleDragMove(e.touches[0]);
+    }
+    
+    function handleTouchEnd(e) {
+        e.preventDefault();
+        handleDragEnd();
+    }
+    
+    // Game state functions
+    function startGame() {
+        gameState = 'playing';
+        currentLevel = 1;
+        score = 0;
+        lives = 3;
+        updateLivesDisplay();
+        resetLevel();
+        showScreen();
+        levelStartTime = Date.now();
+        
+        // Show level indicator
+        levelIndicator.textContent = `LEVEL ${currentLevel}`;
+        levelIndicator.classList.add('visible');
+        setTimeout(() => {
+            levelIndicator.classList.remove('visible');
+        }, 2000);
+        
+        // Start game loop
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
         }
-    ];
-
-    // Combined items
-    const combinedItems = {
-        "Worn Journal+Quill": {
-            name: "Personal Chronicle",
-            description: "Journal with quill - a tool for recording and communicating.",
-            uses: ["Write messages", "Record history", "Share your story"]
-        },
-        "Medicinal Herbs+Clean Water": {
-            name: "Healing Tonic",
-            description: "Herbs steeped in water, with enhanced healing properties.",
-            uses: ["Heal illness", "Restore strength", "Comfort"]
-        },
-        "Carved Whistle+Colorful String": {
-            name: "Child's Necklace",
-            description: "Whistle on a string - a wearable toy that brings joy.",
-            uses: ["Gift to child", "Peace offering", "Trade"]
+        gameLoop();
+    }
+    
+    function restartGame() {
+        gameState = 'playing';
+        currentLevel = 1;
+        score = 0;
+        lives = 3;
+        updateLivesDisplay();
+        resetLevel();
+        showScreen();
+        levelStartTime = Date.now();
+        
+        // Show level indicator
+        levelIndicator.textContent = `LEVEL ${currentLevel}`;
+        levelIndicator.classList.add('visible');
+        setTimeout(() => {
+            levelIndicator.classList.remove('visible');
+        }, 2000);
+        
+        // Start game loop if not already running
+        if (!animationFrameId) {
+            gameLoop();
         }
-    };
-
-    // Action types that affect virtues
-    const actionEffects = {
-        observe: { insight: 2, compassion: 0, courage: 0 },
-        help: { compassion: 3, insight: 1, courage: 1 },
-        confront: { courage: 3, insight: 1, compassion: 0 },
-        express: { compassion: 1, insight: 0, courage: 0 },
-        rest: { insight: 1, compassion: 0, courage: 0 },
-        patience: { insight: 3, compassion: 1, courage: 0 },
-        share: { compassion: 2, insight: 0, courage: 1 },
-        protect: { courage: 3, compassion: 2, insight: 0 },
-        teach: { insight: 2, compassion: 1, courage: 0 },
-        listen: { insight: 2, compassion: 2, courage: 0 },
-        mediate: { compassion: 2, insight: 2, courage: 2 },
-        sacrifice: { compassion: 3, courage: 3, insight: 1 },
-        anti_virtue: { compassion: -3, insight: -2, courage: -1 }
-    };
-
-    // Story situations and their conditions
-    const storySituations = {
-        forestBuddha: {
-            requirements: {
-                location: "forest_edge",
-                insight: 60,
-                patienceActions: 3
-            },
-            text: "Time slows as you sit in patient observation. A sense of profound connection washes over you.",
-            internalText: "I feel lighter, as if a burden I didn't know I carried has been set down.",
-            virtueChanges: { insight: 10, compassion: 5 },
-            flag: "forestBuddhaAchieved"
-        },
-        silentLaborer: {
-            requirements: {
-                location: "farm",
-                compassion: 40,
-                helpActions: 2
-            },
-            text: "Farmer Eadric approaches after watching you work. He gestures to a small shed and mimics sleeping.",
-            internalText: "A place to rest, freely offered. It means everything when you're a stranger.",
-            virtueChanges: { compassion: 5 },
-            flag: "shelterOffered"
-        },
-        sweetDreams: {
-            requirements: {
-                sleeplessness: 70,
-                anyRelationship: 50
-            },
-            text: "You wake to find someone has placed a blanket over you. A bundle of food sits nearby.",
-            internalText: "I can't remember the last time someone looked after me. It feels both uncomfortable and right.",
-            virtueChanges: { compassion: 3 },
-            flag: "receivedCare"
-        },
-        lostItem: {
-            requirements: {
-                hasItem: true,
-                insight: 30
-            },
-            text: "You notice something out of place - clearly belonging to someone in the village.",
-            internalText: "Small things can mean so much when they're important to someone.",
-            actionFlag: "foundLostItem"
-        },
-        brokenVow: {
-            requirements: {
-                combinedVirtue: 180,
-                hasBrokenVow: false
-            },
-            occurs: false,
-            text: "A moment of crisis has arrived. Your vow of silence hangs heavy as the situation demands immediate action.",
-            internalText: "What good is a vow if it causes harm? Sometimes virtue means letting go of rules.",
-            actionFlag: "vowBreakingMoment"
+    }
+    
+    function goToMainMenu() {
+        gameState = 'start';
+        showScreen('start');
+    }
+    
+    function startNextLevel() {
+        currentLevel++;
+        resetLevel();
+        showScreen();
+        gameState = 'playing';
+        levelStartTime = Date.now();
+        
+        // Show level indicator
+        levelIndicator.textContent = `LEVEL ${currentLevel}`;
+        levelIndicator.classList.add('visible');
+        setTimeout(() => {
+            levelIndicator.classList.remove('visible');
+        }, 2000);
+    }
+    
+    function pauseGame() {
+        if (gameState === 'playing') {
+            gameState = 'paused';
+            showScreen('pause');
         }
-    };
-
-    // Contextual actions based on location, time, NPCs present, etc.
-    const contextualActions = {
-        village_entrance: {
-            first_visit: [
-                {
-                    text: "Observe the village",
-                    type: "observe",
-                    effect: () => {
-                        updateVirtues("observe");
-                        return "You take in the atmosphere. People move about, occasionally glancing your way with curiosity or suspicion.";
-                    }
-                },
-                {
-                    text: "Enter the village",
-                    type: "courage",
-                    effect: () => {
-                        updateVirtues("courage");
-                        changeLocation("village_square");
-                        return "You step forward into the village. A few villagers pause to watch you, but most continue their routines.";
-                    }
-                },
-                {
-                    text: "Wait and reflect",
-                    type: "patience",
-                    effect: () => {
-                        updateVirtues("patience");
-                        return "You pause, gathering your thoughts. Your vow feels both burden and shield as you prepare to enter.";
-                    }
-                },
-                {
-                    text: "Check your belongings",
-                    type: "insight",
-                    effect: () => {
-                        updateVirtues("insight");
-                        return "You have nothing but your clothes and your vow. You brought nothing from your past life.";
-                    }
+    }
+    
+    function resumeGame() {
+        if (gameState === 'paused') {
+            gameState = 'playing';
+            showScreen();
+        }
+    }
+    
+    function gameOver() {
+        gameState = 'gameOver';
+        finalScore.textContent = `Score: ${score}`;
+        finalLevel.textContent = `Level: ${currentLevel}`;
+        showScreen('game-over');
+        playSFX('gameOver');
+    }
+    
+    function levelComplete() {
+        gameState = 'levelComplete';
+        const levelDuration = Math.floor((Date.now() - levelStartTime) / 1000);
+        
+        // Bonus score for completing level
+        const timeBonus = Math.max(100 - levelDuration, 0) * 10 * currentLevel;
+        score += timeBonus;
+        updateScore();
+        
+        levelScore.textContent = `Score: ${score}`;
+        levelTime.textContent = `Time: ${levelDuration}s`;
+        levelBonus.textContent = `Bonus: +${timeBonus}`;
+        showScreen('level-complete');
+        playSFX('levelComplete');
+    }
+    
+    function resetLevel() {
+        // Clear all game objects
+        obstacles = [];
+        targets = [];
+        particles = [];
+        powerUps = [];
+        
+        // Reset player
+        player = new Player();
+        
+        // Generate level based on current level and difficulty
+        generateLevel(currentLevel, selectedDifficulty);
+        
+        // Reset UI
+        updateScore();
+        updateLevelDisplay();
+        combo = 0;
+        
+        // Update progress bar
+        updateProgressBar();
+    }
+    
+    // Update UI functions
+    function updateScore() {
+        scoreDisplay.textContent = score;
+        
+        // Add a little animation
+        scoreDisplay.classList.add('highlight');
+        setTimeout(() => {
+            scoreDisplay.classList.remove('highlight');
+        }, 300);
+    }
+    
+    function updateLevelDisplay() {
+        levelDisplay.textContent = currentLevel;
+    }
+    
+    function updateLivesDisplay() {
+        livesContainer.innerHTML = '';
+        for (let i = 0; i < 3; i++) {
+            const lifeElement = document.createElement('div');
+            lifeElement.className = 'life';
+            if (i >= lives) {
+                lifeElement.classList.add('lost');
+            }
+            livesContainer.appendChild(lifeElement);
+        }
+    }
+    
+    function updateProgressBar() {
+        const progress = (targetCount - hitsRequired) / targetCount * 100;
+        progressBar.style.width = `${progress}%`;
+    }
+    
+    function showCombo(comboCount) {
+        comboIndicator.textContent = `COMBO x${comboCount}!`;
+        comboIndicator.className = '';
+        void comboIndicator.offsetWidth; // Trigger reflow
+        comboIndicator.classList.add('pop-in');
+    }
+    
+    function showPowerUpIndicator(type) {
+        let text = '';
+        switch (type) {
+            case 'multiball':
+                text = 'MULTIBALL!';
+                break;
+            case 'slowmo':
+                text = 'SLOW MOTION!';
+                break;
+            case 'extralife':
+                text = '+1 LIFE!';
+                break;
+        }
+        
+        powerUpIndicator.textContent = text;
+        powerUpIndicator.classList.add('visible');
+        
+        setTimeout(() => {
+            powerUpIndicator.classList.remove('visible');
+        }, 2000);
+    }
+    
+    // Game objects classes
+    class Player {
+        constructor() {
+            this.radius = 15;
+            this.resetPosition();
+            this.vx = 0;
+            this.vy = 0;
+            this.canLaunch = true;
+            this.isLaunched = false;
+            this.color = '#FF3EA5';
+            this.trailTimer = 0;
+            this.powerUp = null;
+            this.powerUpTimer = 0;
+        }
+        
+        resetPosition() {
+            this.x = width / 2;
+            this.y = height - 100;
+            this.vx = 0;
+            this.vy = 0;
+            this.canLaunch = true;
+            this.isLaunched = false;
+        }
+        
+        update() {
+            // Apply power-up effects
+            if (this.powerUp) {
+                this.powerUpTimer--;
+                if (this.powerUpTimer <= 0) {
+                    this.powerUp = null;
                 }
-            ],
-            standard: [
-                {
-                    text: "Observe the coming and going",
-                    type: "observe",
-                    effect: () => {
-                        updateVirtues("observe");
-                        return "You watch villagers entering and leaving. The rhythm of village life becomes more apparent.";
-                    }
-                },
-                {
-                    text: "Enter the village",
-                    type: "normal",
-                    effect: () => {
-                        changeLocation("village_square");
-                        return "You walk toward the center of the village.";
-                    }
-                },
-                {
-                    text: "Sit by the roadside",
-                    type: "rest",
-                    effect: () => {
-                        updateVirtues("rest");
-                        reduceSleeplessness(10);
-                        advanceTime(1);
-                        return "You find a comfortable spot to sit and watch travelers. The rest clears your mind.";
-                    }
-                },
-                {
-                    text: "Help clear the path",
-                    type: "help",
-                    requirements: {
-                        timeOfDay: ["Morning", "Afternoon"]
-                    },
-                    effect: () => {
-                        updateVirtues("help");
-                        increaseVillageMorale(3);
-                        return "You clear debris from the path. A few passersby nod appreciatively at your work.";
-                    }
+            }
+            
+            // Add trail particles
+            this.trailTimer++;
+            if (this.isLaunched && this.trailTimer >= 3) {
+                this.trailTimer = 0;
+                createParticles(this.x, this.y, 1, this.color, 1, 10);
+            }
+            
+            // Apply physics if launched
+            if (this.isLaunched) {
+                // Apply gravity and friction
+                this.vy += GRAVITY * (slowMotion > 0 ? 0.3 : 1);
+                this.vx *= FRICTION;
+                this.vy *= FRICTION;
+                
+                // Update position
+                this.x += this.vx * (slowMotion > 0 ? 0.3 : 1);
+                this.y += this.vy * (slowMotion > 0 ? 0.3 : 1);
+                
+                // Boundary collision
+                if (this.x < this.radius) {
+                    this.x = this.radius;
+                    this.vx *= -0.8;
+                    createParticles(this.x, this.y, 5, '#37F2FF', 2, 20);
+                    playSFX('bounce');
                 }
-            ]
-        },
-        village_square: {
-            standard: [
-                {
-                    text: "Observe the square",
-                    type: "observe",
-                    effect: () => {
-                        updateVirtues("observe");
-                        return "The square bustles with activity. Children play, elders chat, and traders display their wares.";
+                if (this.x > width - this.radius) {
+                    this.x = width - this.radius;
+                    this.vx *= -0.8;
+                    createParticles(this.x, this.y, 5, '#37F2FF', 2, 20);
+                    playSFX('bounce');
+                }
+                if (this.y < this.radius) {
+                    this.y = this.radius;
+                    this.vy *= -0.8;
+                    createParticles(this.x, this.y, 5, '#37F2FF', 2, 20);
+                    playSFX('bounce');
+                }
+                
+                // Bottom boundary - reset if ball falls off-screen
+                if (this.y > height + 50) {
+                    this.loseLife();
+                }
+                
+                // Check collisions with obstacles
+                obstacles.forEach(obstacle => {
+                    if (this.collidesWith(obstacle)) {
+                        this.handleCollision(obstacle);
+                        playSFX('bounce');
                     }
-                },
-                {
-                    text: "Sit on a bench",
-                    type: "rest",
-                    effect: () => {
-                        updateVirtues("rest");
-                        reduceSleeplessness(5);
-                        advanceTime(1);
-                        return "You sit and take in the village center. People gradually grow accustomed to your presence.";
+                });
+                
+                // Check collisions with targets
+                targets.forEach((target, index) => {
+                    if (!target.hit && this.collidesWith(target)) {
+                        target.hit = true;
+                        hitsRequired--;
+                        updateProgressBar();
+                        
+                        // Increase score
+                        const hitScore = 100 * (1 + combo * 0.1) * currentLevel;
+                        score += Math.floor(hitScore);
+                        updateScore();
+                        
+                        // Combo system
+                        combo++;
+                        if (combo > 1) {
+                            showCombo(combo);
+                        }
+                        
+                        // Create particles
+                        createParticles(target.x, target.y, 20, target.color, 3, 30);
+                        
+                        // Chance to spawn power-up
+                        if (Math.random() < 0.1 * selectedDifficulty) {
+                            spawnPowerUp(target.x, target.y);
+                        }
+                        
+                        // Screen effects
+                        screenShake = 5;
+                        
+                        // Play hit sound
+                        playSFX('hit');
+                        
+                        // Check if level is complete
+                        if (hitsRequired <= 0) {
+                            levelComplete();
+                        }
                     }
-                },
-                {
-                    text: "Help an elderly villager",
-                    type: "help",
-                    requirements: {
-                        random: 0.6
-                    },
-                    effect: () => {
-                        updateVirtues("help");
-                        increaseVillageMorale(2);
-                        increaseNPCRelationship("elder", 3);
-                        return "You assist an elderly person with their packages, receiving a grateful smile in return.";
+                });
+                
+                // Check collisions with power-ups
+                powerUps.forEach((powerUp, index) => {
+                    if (this.collidesWith(powerUp)) {
+                        this.applyPowerUp(powerUp.type);
+                        powerUps.splice(index, 1);
+                        createParticles(powerUp.x, powerUp.y, 15, powerUp.color, 2, 25);
+                        playSFX('powerup');
                     }
-                },
-                {
-                    text: "Smile at a passing child",
-                    type: "express",
-                    effect: () => {
-                        updateVirtues("express");
-                        if (Math.random() > 0.7) {
-                            increaseNPCRelationship("child", 2);
-                            return "You smile at a child who, after hesitation, smiles back with curiosity.";
-                        } else {
-                            return "You smile at a child, but they hide behind their parent, watching cautiously.";
+                });
+            }
+            
+            // Launch input visualization
+            if (isDragging && this.canLaunch) {
+                const dx = touchStart.x - touchEnd.x;
+                const dy = touchStart.y - touchEnd.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const power = Math.min(distance / 10, MAX_POWER);
+                
+                // Draw launch trajectory preview
+                if (power > 1) {
+                    const steps = 10;
+                    const stepX = dx / 10 / steps;
+                    const stepY = dy / 10 / steps;
+                    
+                    CTX.beginPath();
+                    CTX.moveTo(this.x, this.y);
+                    
+                    let previewX = this.x;
+                    let previewY = this.y;
+                    
+                    for (let i = 0; i < steps; i++) {
+                        previewX -= stepX;
+                        previewY -= stepY;
+                        CTX.lineTo(previewX, previewY);
+                    }
+                    
+                    CTX.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                    CTX.lineWidth = 3;
+                    CTX.stroke();
+                }
+            }
+        }
+        
+        draw() {
+            // Draw player shadow
+            CTX.beginPath();
+            CTX.arc(this.x + 3, this.y + 3, this.radius, 0, Math.PI * 2);
+            CTX.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            CTX.fill();
+            
+            // Draw player
+            CTX.beginPath();
+            CTX.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            
+            // Draw power-up effect
+            if (this.powerUp === 'multiball') {
+                const gradient = CTX.createRadialGradient(
+                    this.x, this.y, 0,
+                    this.x, this.y, this.radius
+                );
+                gradient.addColorStop(0, '#FFFFFF');
+                gradient.addColorStop(1, '#FF3EA5');
+                CTX.fillStyle = gradient;
+            } else if (this.powerUp === 'slowmo') {
+                const gradient = CTX.createRadialGradient(
+                    this.x, this.y, 0,
+                    this.x, this.y, this.radius
+                );
+                gradient.addColorStop(0, '#FFFFFF');
+                gradient.addColorStop(1, '#37F2FF');
+                CTX.fillStyle = gradient;
+            } else {
+                CTX.fillStyle = this.color;
+            }
+            
+            CTX.fill();
+            
+            // Add glow effect
+            CTX.beginPath();
+            CTX.arc(this.x, this.y, this.radius + 3, 0, Math.PI * 2);
+            CTX.strokeStyle = this.color;
+            CTX.lineWidth = 2;
+            CTX.stroke();
+            
+            // Draw direction indicator when can launch
+            if (this.canLaunch) {
+                CTX.beginPath();
+                CTX.arc(this.x, this.y, this.radius - 5, 0, Math.PI * 2);
+                CTX.fillStyle = '#FFFFFF';
+                CTX.fill();
+            }
+        }
+        
+        collidesWith(obj) {
+            const dx = this.x - obj.x;
+            const dy = this.y - obj.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            return distance < this.radius + obj.radius;
+        }
+        
+        handleCollision(obj) {
+            // Calculate collision normal
+            const dx = this.x - obj.x;
+            const dy = this.y - obj.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Normalize the collision normal
+            const nx = dx / distance;
+            const ny = dy / distance;
+            
+            // Calculate relative velocity
+            const relativeVelocity = this.vx * nx + this.vy * ny;
+            
+            // Do not resolve if objects are moving away from each other
+            if (relativeVelocity > 0) {
+                // Calculate impulse scalar
+                const impulse = 2 * relativeVelocity;
+                
+                // Apply impulse
+                this.vx += impulse * nx;
+                this.vy += impulse * ny;
+                
+                // Adjust position to prevent sticking
+                const overlap = this.radius + obj.radius - distance;
+                this.x += overlap * nx;
+                this.y += overlap * ny;
+                
+                // Create particles
+                createParticles(this.x - nx * this.radius, this.y - ny * this.radius, 5, '#FFFFFF', 2, 15);
+            }
+        }
+        
+        loseLife() {
+            lives--;
+            updateLivesDisplay();
+            
+            // Shake screen
+            screenShake = 10;
+            
+            // Reset player
+            this.resetPosition();
+            
+            // Reset combo
+            combo = 0;
+            
+            // Check game over
+            if (lives <= 0) {
+                gameOver();
+            }
+        }
+        
+        applyPowerUp(type) {
+            this.powerUp = type;
+            this.powerUpTimer = 300; // 5 seconds at 60fps
+            
+            switch (type) {
+                case 'multiball':
+                    // Spawn extra balls (in future implementation)
+                    break;
+                case 'slowmo':
+                    slowMotion = 300; // 5 seconds of slow motion
+                    CANVAS.style.filter = 'brightness(1.2) contrast(1.2)';
+                    break;
+                case 'extralife':
+                    if (lives < 3) {
+                        lives++;
+                        updateLivesDisplay();
+                        const lifeElements = document.querySelectorAll('.life');
+                        lifeElements[lives - 1].classList.add('pulse');
+                        setTimeout(() => {
+                            lifeElements[lives - 1].classList.remove('pulse');
+                        }, 2000);
+                    } else {
+                        // Extra score instead
+                        score += 500 * currentLevel;
+                        updateScore();
+                    }
+                    break;
+            }
+            
+            // Show power-up indicator
+            showPowerUpIndicator(type);
+        }
+    }
+    
+    class Target {
+        constructor(x, y, radius = 20) {
+            this.x = x;
+            this.y = y;
+            this.radius = radius;
+            this.hit = false;
+            this.color = getRandomColor();
+            this.pulseTimer = 0;
+            this.pulseDirection = 1;
+            this.originalRadius = radius;
+        }
+        
+        update() {
+            if (!this.hit) {
+                // Pulse animation
+                this.pulseTimer += 0.05;
+                const pulse = Math.sin(this.pulseTimer) * 2;
+                this.radius = this.originalRadius + pulse;
+            }
+        }
+        
+        draw() {
+            if (!this.hit) {
+                // Draw glow
+                CTX.beginPath();
+                CTX.arc(this.x, this.y, this.radius + 5, 0, Math.PI * 2);
+                CTX.fillStyle = this.color + '33'; // Add transparency
+                CTX.fill();
+                
+                // Draw target
+                CTX.beginPath();
+                CTX.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                CTX.fillStyle = this.color;
+                CTX.fill();
+                
+                // Draw inner circle
+                CTX.beginPath();
+                CTX.arc(this.x, this.y, this.radius * 0.7, 0, Math.PI * 2);
+                CTX.fillStyle = '#FFFFFF33';
+                CTX.fill();
+                
+                // Draw center dot
+                CTX.beginPath();
+                CTX.arc(this.x, this.y, this.radius * 0.3, 0, Math.PI * 2);
+                CTX.fillStyle = '#FFFFFF';
+                CTX.fill();
+            }
+        }
+    }
+    
+    class Obstacle {
+        constructor(x, y, radius = 30) {
+            this.x = x;
+            this.y = y;
+            this.radius = radius;
+            this.color = '#4961FF';
+            this.rotationAngle = 0;
+            this.spikes = Math.floor(Math.random() * 3) + 4; // 4-6 spikes
+        }
+        
+        update() {
+            this.rotationAngle += 0.01;
+        }
+        
+        draw() {
+            // Draw shadow
+            CTX.beginPath();
+            CTX.arc(this.x + 5, this.y + 5, this.radius, 0, Math.PI * 2);
+            CTX.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            CTX.fill();
+            
+            // Draw obstacle with spikes
+            CTX.beginPath();
+            
+            // Draw spiky shape
+            for (let i = 0; i < this.spikes * 2; i++) {
+                const angle = (i * Math.PI / this.spikes) + this.rotationAngle;
+                const radius = i % 2 === 0 ? this.radius : this.radius * 0.7;
+                const x = this.x + radius * Math.cos(angle);
+                const y = this.y + radius * Math.sin(angle);
+                
+                if (i === 0) {
+                    CTX.moveTo(x, y);
+                } else {
+                    CTX.lineTo(x, y);
+                }
+            }
+            
+            CTX.closePath();
+            
+            // Create gradient
+            const gradient = CTX.createRadialGradient(
+                this.x, this.y, 0,
+                this.x, this.y, this.radius
+            );
+            gradient.addColorStop(0, '#6B81FF');
+            gradient.addColorStop(1, '#4961FF');
+            
+            CTX.fillStyle = gradient;
+            CTX.fill();
+            
+            // Draw outline
+            CTX.strokeStyle = '#37F2FF';
+            CTX.lineWidth = 2;
+            CTX.stroke();
+            
+            // Draw center
+            CTX.beginPath();
+            CTX.arc(this.x, this.y, this.radius * 0.3, 0, Math.PI * 2);
+            CTX.fillStyle = '#FFFFFF';
+            CTX.fill();
+        }
+    }
+    
+    class PowerUp {
+        constructor(x, y, type) {
+            this.x = x;
+            this.y = y;
+            this.radius = 15;
+            this.type = type;
+            this.vy = -2;
+            this.rotationAngle = 0;
+            
+            // Set color based on type
+            switch (type) {
+                case 'multiball':
+                    this.color = '#FB46F1';
+                    break;
+                case 'slowmo':
+                    this.color = '#37F2FF';
+                    break;
+                case 'extralife':
+                    this.color = '#FF3EA5';
+                    break;
+                default:
+                    this.color = '#FFFFFF';
+            }
+        }
+        
+        update() {
+            this.y += this.vy;
+            this.vy += 0.05;
+            this.rotationAngle += 0.1;
+            
+            // Remove if off screen
+            if (this.y > height + 50) {
+                const index = powerUps.indexOf(this);
+                if (index !== -1) {
+                    powerUps.splice(index, 1);
+                }
+            }
+        }
+        
+        draw() {
+            // Draw glow
+            CTX.beginPath();
+            CTX.arc(this.x, this.y, this.radius + 5, 0, Math.PI * 2);
+            CTX.fillStyle = this.color + '44'; // Add transparency
+            CTX.fill();
+            
+            // Draw power-up icon based on type
+            if (this.type === 'multiball') {
+                // Draw multiple circles for multiball
+                const angle1 = this.rotationAngle;
+                const angle2 = this.rotationAngle + (2 * Math.PI / 3);
+                const angle3 = this.rotationAngle + (4 * Math.PI / 3);
+                const distance = this.radius * 0.5;
+                
+                CTX.beginPath();
+                CTX.arc(this.x + Math.cos(angle1) * distance, this.y + Math.sin(angle1) * distance, this.radius * 0.5, 0, Math.PI * 2);
+                CTX.arc(this.x + Math.cos(angle2) * distance, this.y + Math.sin(angle2) * distance, this.radius * 0.5, 0, Math.PI * 2);
+                CTX.arc(this.x + Math.cos(angle3) * distance, this.y + Math.sin(angle3) * distance, this.radius * 0.5, 0, Math.PI * 2);
+                CTX.fillStyle = this.color;
+                CTX.fill();
+            } else if (this.type === 'slowmo') {
+                // Draw clock for slow motion
+                CTX.beginPath();
+                CTX.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                CTX.fillStyle = this.color;
+                CTX.fill();
+                
+                // Clock hands
+                CTX.beginPath();
+                CTX.moveTo(this.x, this.y);
+                CTX.lineTo(this.x + Math.cos(this.rotationAngle) * this.radius * 0.7, this.y + Math.sin(this.rotationAngle) * this.radius * 0.7);
+                CTX.strokeStyle = '#FFFFFF';
+                CTX.lineWidth = 2;
+                CTX.stroke();
+                
+                CTX.beginPath();
+                CTX.moveTo(this.x, this.y);
+                CTX.lineTo(this.x + Math.cos(this.rotationAngle * 0.5) * this.radius * 0.5, this.y + Math.sin(this.rotationAngle * 0.5) * this.radius * 0.5);
+                CTX.strokeStyle = '#FFFFFF';
+                CTX.lineWidth = 2;
+                CTX.stroke();
+            } else if (this.type === 'extralife') {
+                // Draw heart for extra life
+                CTX.beginPath();
+                CTX.arc(this.x - this.radius * 0.3, this.y - this.radius * 0.2, this.radius * 0.5, Math.PI * 0.25, Math.PI * 1.5);
+                CTX.arc(this.x + this.radius * 0.3, this.y - this.radius * 0.2, this.radius * 0.5, Math.PI * 1.5, Math.PI * 0.75 + Math.PI);
+                CTX.lineTo(this.x, this.y + this.radius * 0.6);
+                CTX.closePath();
+                CTX.fillStyle = this.color;
+                CTX.fill();
+            }
+        }
+    }
+    
+    // Helper functions
+    function getRandomColor() {
+        const colors = ['#FF3EA5', '#FB46F1', '#4961FF', '#37F2FF', '#18FAC5'];
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
+    
+    function createParticles(x, y, count, color, speed = 2, lifetime = 20) {
+        for (let i = 0; i < count; i++) {
+            particles.push({
+                x: x,
+                y: y,
+                vx: (Math.random() - 0.5) * speed,
+                vy: (Math.random() - 0.5) * speed,
+                radius: Math.random() * 5 + 2,
+                color: color,
+                lifetime: lifetime,
+                maxLifetime: lifetime,
+                alpha: 1
+            });
+        }
+    }
+    
+    function spawnPowerUp(x, y) {
+        const types = ['multiball', 'slowmo', 'extralife'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        powerUps.push(new PowerUp(x, y, type));
+    }
+    
+    function generateLevel(level, difficulty) {
+        const levelWidth = width - 100;
+        const levelHeight = height - 200;
+        
+        // Calculate number of targets and obstacles based on level and difficulty
+        targetCount = Math.min(5 + level * 2, 20);
+        const obstacleCount = Math.min(2 + level + difficulty, 15);
+        
+        // All targets need to be hit
+        hitsRequired = targetCount;
+        
+        // Generate targets in a pattern
+        for (let i = 0; i < targetCount; i++) {
+            // Calculate position in a grid or pattern
+            let x, y;
+            
+            if (level % 3 === 1) {
+                // Grid pattern
+                const cols = Math.ceil(Math.sqrt(targetCount));
+                const rows = Math.ceil(targetCount / cols);
+                const colWidth = levelWidth / cols;
+                const rowHeight = levelHeight / rows;
+                
+                const col = i % cols;
+                const row = Math.floor(i / cols);
+                
+                x = 50 + colWidth / 2 + col * colWidth;
+                y = 100 + rowHeight / 2 + row * rowHeight;
+            } else if (level % 3 === 2) {
+                // Circular pattern
+                const angle = (i / targetCount) * Math.PI * 2;
+                const radius = Math.min(levelWidth, levelHeight) * 0.4;
+                
+                x = width / 2 + Math.cos(angle) * radius;
+                y = height / 2 - 100 + Math.sin(angle) * radius;
+            } else {
+                // Random pattern with minimum distance
+                let validPosition = false;
+                while (!validPosition) {
+                    x = 50 + Math.random() * levelWidth;
+                    y = 100 + Math.random() * levelHeight;
+                    
+                    // Check minimum distance from other targets
+                    validPosition = true;
+                    for (let j = 0; j < targets.length; j++) {
+                        const dx = x - targets[j].x;
+                        const dy = y - targets[j].y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < 80) {
+                            validPosition = false;
+                            break;
                         }
                     }
                 }
-            ]
-        },
-        // More locations and actions would be defined similarly...
-    };
-
-    // Standard actions available in most situations
-    const standardActions = {
-        observe: {
-            text: "Observe carefully",
-            type: "observe",
-            effect: () => {
-                updateVirtues("observe");
-                const insightBonus = Math.floor(gameState.insight / 20);
-                const perceptionDetail = getPerceptionDetail(gameState.insight);
+            }
+            
+            // Create target with size variation based on difficulty
+            const radius = 25 - (difficulty * 2);
+            targets.push(new Target(x, y, radius));
+        }
+        
+        // Generate obstacles
+        for (let i = 0; i < obstacleCount; i++) {
+            let x, y;
+            let validPosition = false;
+            
+            while (!validPosition) {
+                x = 50 + Math.random() * levelWidth;
+                y = 100 + Math.random() * levelHeight;
                 
-                // Check for village challenge signs if insight is high enough
-                if (gameState.insight >= gameState.villageChallenge.insightThreshold && !gameState.storyFlags.challengeNoticed) {
-                    gameState.storyFlags.challengeNoticed = true;
-                    return `As you observe, ${perceptionDetail} ${gameState.villageChallenge.signs[Math.floor(Math.random() * gameState.villageChallenge.signs.length)]}. This seems significant.`;
-                }
-                
-                return `You observe your surroundings. ${perceptionDetail} You notice details others might miss.`;
-            }
-        },
-        wait: {
-            text: "Wait patiently",
-            type: "patience",
-            effect: () => {
-                updateVirtues("patience");
-                advanceTime(1);
-                increaseNPCRelationship(getRandomNPC(), 1);
-                
-                return "You stand quietly, practicing patience. There's peace in simply being present.";
-            }
-        },
-        move: {
-            text: "Go elsewhere",
-            type: "normal",
-            effect: () => {
-                return "You decide to move to another location.";
-            }
-        },
-        rest: {
-            text: "Rest a while",
-            type: "rest",
-            effect: () => {
-                updateVirtues("rest");
-                reduceSleeplessness(15);
-                advanceTime(1);
-                
-                return "You find a comfortable spot to rest. Your body relaxes and your mind clears.";
-            }
-        }
-    };
-
-    // Utility Functions
-    function getRandomNPC() {
-        const npcKeys = Object.keys(npcs);
-        return npcKeys[Math.floor(Math.random() * npcKeys.length)];
-    }
-
-    function getPerceptionDetail(insight) {
-        if (insight < 30) {
-            return "You see the obvious details.";
-        } else if (insight < 50) {
-            return "You notice subtle movements and expressions.";
-        } else if (insight < 70) {
-            return "You perceive hidden patterns and unspoken tensions.";
-        } else {
-            return "You clearly see the intricate web of relationships and emotions.";
-        }
-    }
-
-    function updateVirtues(actionType) {
-        if (!actionEffects[actionType]) return;
-        
-        const effects = actionEffects[actionType];
-        gameState.compassion = Math.max(0, Math.min(100, gameState.compassion + effects.compassion));
-        gameState.insight = Math.max(0, Math.min(100, gameState.insight + effects.insight));
-        gameState.courage = Math.max(0, Math.min(100, gameState.courage + effects.courage));
-        
-        // Update daily virtue changes for the log
-        gameState.dailyVirtueChanges.compassion += effects.compassion;
-        gameState.dailyVirtueChanges.insight += effects.insight;
-        gameState.dailyVirtueChanges.courage += effects.courage;
-        
-        // Update perception score based on virtue changes
-        if (effects.compassion > 0 || effects.insight > 0 || effects.courage > 0) {
-            gameState.perceptionScore += (effects.compassion + effects.insight + effects.courage) / 3;
-        } else {
-            gameState.perceptionScore += (effects.compassion + effects.insight + effects.courage) / 2; // Negative actions hurt perception more
-        }
-        
-        updateTextStyles();
-    }
-
-    function updateTextStyles() {
-        const totalVirtue = gameState.compassion + gameState.insight + gameState.courage;
-        
-        // Remove all virtue classes
-        narrativeText.classList.remove('low-virtue', 'medium-virtue', 'high-virtue');
-        internalMonologue.classList.remove('low-virtue', 'medium-virtue', 'high-virtue');
-        
-        // Add appropriate class based on total virtue
-        if (totalVirtue < 90) {
-            narrativeText.classList.add('low-virtue');
-            internalMonologue.classList.add('low-virtue');
-        } else if (totalVirtue < 180) {
-            narrativeText.classList.add('medium-virtue');
-            internalMonologue.classList.add('medium-virtue');
-        } else {
-            narrativeText.classList.add('high-virtue');
-            internalMonologue.classList.add('high-virtue');
-        }
-        
-        // Update location image saturation based on village morale
-        const saturation = 20 + (gameState.villageMorale * 0.8); // 20-100%
-        locationImage.style.filter = `saturate(${saturation}%)`;
-    }
-
-    function increaseVillageMorale(amount) {
-        gameState.villageMorale = Math.min(100, gameState.villageMorale + amount);
-    }
-
-    function decreaseVillageMorale(amount) {
-        gameState.villageMorale = Math.max(0, gameState.villageMorale - amount);
-    }
-
-    function increaseNPCRelationship(npc, amount) {
-        if (gameState.npcRelationships[npc] !== undefined) {
-            gameState.npcRelationships[npc] = Math.min(100, gameState.npcRelationships[npc] + amount);
-        }
-    }
-
-    function decreaseNPCRelationship(npc, amount) {
-        if (gameState.npcRelationships[npc] !== undefined) {
-            gameState.npcRelationships[npc] = Math.max(-100, gameState.npcRelationships[npc] - amount);
-        }
-    }
-
-    function increaseSleeplessness(amount) {
-        gameState.sleeplessness = Math.min(100, gameState.sleeplessness + amount);
-        checkForHallucinations();
-    }
-
-    function reduceSleeplessness(amount) {
-        gameState.sleeplessness = Math.max(0, gameState.sleeplessness - amount);
-    }
-
-    function checkForHallucinations() {
-        if (gameState.sleeplessness > 70 && Math.random() < 0.3) {
-            // Trigger a hallucination
-            const hallucinations = [
-                "You see a familiar face in the crowd, but when you look again, they're gone.",
-                "A fragment of memory flashes—voices arguing, a decision made in anger.",
-                "The ground seems to sway as you hear distant whispers calling your name.",
-                "For an instant, your hands appear covered in something dark, then clean again."
-            ];
-            
-            updateNarrativeText(hallucinations[Math.floor(Math.random() * hallucinations.length)]);
-            updateInternalMonologue("My mind plays tricks. I need rest soon.");
-        }
-        
-        if (gameState.sleeplessness >= 100) {
-            // Force sleep
-            updateNarrativeText("Exhaustion overwhelms you. You collapse as consciousness slips away.");
-            updateInternalMonologue("I can't... stay... awake...");
-            
-            // Advance time and reduce sleeplessness
-            advanceTime(2);
-            reduceSleeplessness(70);
-            
-            // Potential negative consequences
-            decreaseVillageMorale(5);
-            Object.keys(gameState.npcRelationships).forEach(npc => {
-                decreaseNPCRelationship(npc, 2);
-            });
-        }
-    }
-
-    function advanceTime(units = 1) {
-        for (let i = 0; i < units; i++) {
-            gameState.timeUnit++;
-            
-            // Next day if we've gone through all time units
-            if (gameState.timeUnit > 3) {
-                endDay();
-                gameState.timeUnit = 0;
-                gameState.day++;
-                
-                if (gameState.day > 7) {
-                    endGame();
-                    return;
-                }
-                
-                startNewDay();
-            }
-            
-            // Update time display
-            timeDisplay.textContent = gameState.timeUnits[gameState.timeUnit];
-            dayDisplay.textContent = `Day ${gameState.day}`;
-            
-            // Increase sleeplessness normally through day
-            if (gameState.timeUnit !== 0) { // Not morning
-                increaseSleeplessness(5);
-            }
-        }
-    }
-
-    function changeLocation(newLocation) {
-        if (!locations[newLocation]) return;
-        
-        gameState.location = newLocation;
-        
-        // Update location display
-        locationImage.style.backgroundImage = locations[newLocation].image;
-        
-        // First visit special handling
-        if (locations[newLocation].firstVisit) {
-            locations[newLocation].firstVisit = false;
-            updateNarrativeText(`${locations[newLocation].description} This is your first time here.`);
-        } else {
-            updateNarrativeText(locations[newLocation].description);
-        }
-        
-        // Check for NPCs in this location
-        checkForNPCEncounters();
-        
-        // Update available actions based on new location
-        updateAvailableActions();
-    }
-
-    function checkForNPCEncounters() {
-        // Check which NPCs are at this location for this time of day
-        const presentNPCs = [];
-        
-        Object.keys(npcs).forEach(npcKey => {
-            const npc = npcs[npcKey];
-            const currentTimeUnit = gameState.timeUnits[gameState.timeUnit];
-            
-            if (npc.schedule[currentTimeUnit] === gameState.location) {
-                presentNPCs.push(npcKey);
-            }
-        });
-        
-        // If there are NPCs present, maybe trigger an encounter
-        if (presentNPCs.length > 0 && Math.random() < 0.7) {
-            const randomNPC = presentNPCs[Math.floor(Math.random() * presentNPCs.length)];
-            triggerNPCEncounter(randomNPC);
-        }
-    }
-
-    function triggerNPCEncounter(npcKey) {
-        const npc = npcs[npcKey];
-        const relationship = gameState.npcRelationships[npcKey];
-        
-        // Different interactions based on relationship level
-        let encounterText = "";
-        
-        if (relationship < -50) {
-            encounterText = `${npc.name} sees you and deliberately changes direction, avoiding you.`;
-        } else if (relationship < 0) {
-            encounterText = `${npc.name} gives you a wary glance, still unsure about your presence.`;
-        } else if (relationship < 30) {
-            encounterText = `${npc.name} acknowledges you with a small nod.`;
-        } else if (relationship < 70) {
-            encounterText = `${npc.name} offers you a genuine smile of greeting.`;
-        } else {
-            encounterText = `${npc.name}'s face brightens upon seeing you, approaching with warm familiarity.`;
-        }
-        
-        updateNarrativeText(encounterText);
-    }
-
-    function addItemToInventory(itemName) {
-        // Can only hold 2 items
-        if (gameState.items.length >= 2) {
-            updateNarrativeText("You cannot carry any more items. You must drop something first.");
-            return false;
-        }
-        
-        // Find the item
-        const item = gameItems.find(i => i.name === itemName);
-        if (!item) return false;
-        
-        // Add it
-        gameState.items.push(itemName);
-        
-        // Show notification
-        itemMessage.textContent = `Item acquired: ${itemName}`;
-        itemNotification.classList.remove('hidden');
-        
-        // Hide after 3 seconds
-        setTimeout(() => {
-            itemNotification.classList.add('hidden');
-        }, 3000);
-        
-        // Check for combinable items
-        checkForCombinableItems();
-        
-        return true;
-    }
-
-    function removeItemFromInventory(itemName) {
-        const index = gameState.items.indexOf(itemName);
-        if (index > -1) {
-            gameState.items.splice(index, 1);
-            return true;
-        }
-        return false;
-    }
-
-    function checkForCombinableItems() {
-        if (gameState.items.length !== 2) return false;
-        
-        // Check if these items can be combined
-        const item1 = gameItems.find(i => i.name === gameState.items[0]);
-        const item2 = gameItems.find(i => i.name === gameState.items[1]);
-        
-        if (item1 && item2 && item1.combinable && item2.combinable) {
-            if (item1.comboPartner === item2.name || item2.comboPartner === item1.name) {
-                // These items can be combined!
-                if (gameState.insight >= 50) {
-                    updateInternalMonologue("I wonder if these two items could be used together...");
-                    return true;
-                }
-            }
-        }
-        
-        return false;
-    }
-
-    function combineItems() {
-        const itemCombo = gameState.items.sort().join("+");
-        const combinedItem = combinedItems[itemCombo];
-        
-        if (!combinedItem) return false;
-        
-        // Remove the original items
-        gameState.items = [];
-        
-        // Add the new combined item
-        gameState.items.push(combinedItem.name);
-        
-        // Show notification
-        itemMessage.textContent = `Created: ${combinedItem.name}`;
-        itemNotification.classList.remove('hidden');
-        
-        // Hide after 3 seconds
-        setTimeout(() => {
-            itemNotification.classList.add('hidden');
-        }, 3000);
-        
-        return true;
-    }
-
-    function updateNarrativeText(text) {
-        narrativeText.innerHTML = text;
-    }
-
-    function updateInternalMonologue(text) {
-        internalMonologue.innerHTML = text;
-    }
-
-    function updateAvailableActions() {
-        // Get contextual actions for current location
-        const locationActions = contextualActions[gameState.location];
-        let availableActions = [];
-        
-        // Add location-specific actions
-        if (locationActions) {
-            if (locations[gameState.location].firstVisit && locationActions.first_visit) {
-                availableActions = [...locationActions.first_visit];
-            } else if (locationActions.standard) {
-                // Filter standard actions based on requirements
-                availableActions = locationActions.standard.filter(action => {
-                    if (!action.requirements) return true;
+                // Check minimum distance from targets
+                validPosition = true;
+                for (let j = 0; j < targets.length; j++) {
+                    const dx = x - targets[j].x;
+                    const dy = y - targets[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
                     
-                    // Check time of day requirement
-                    if (action.requirements.timeOfDay && !action.requirements.timeOfDay.includes(gameState.timeUnits[gameState.timeUnit])) {
-                        return false;
+                    if (distance < 100) {
+                        validPosition = false;
+                        break;
                     }
+                }
+                
+                // Check minimum distance from player starting position
+                const dx = x - player.x;
+                const dy = y - player.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 150) {
+                    validPosition = false;
+                }
+                
+                // Check minimum distance from other obstacles
+                for (let j = 0; j < obstacles.length; j++) {
+                    const dx = x - obstacles[j].x;
+                    const dy = y - obstacles[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
                     
-                    // Check random chance
-                    if (action.requirements.random && Math.random() > action.requirements.random) {
-                        return false;
+                    if (distance < 80) {
+                        validPosition = false;
+                        break;
                     }
-                    
-                    return true;
-                });
+                }
+            }
+            
+            // Create obstacle with size variation
+            const radius = 25 + (difficulty * 2);
+            obstacles.push(new Obstacle(x, y, radius));
+        }
+    }
+    
+    // Main game loop
+    function gameLoop() {
+        // Clear canvas
+        CTX.clearRect(0, 0, width, height);
+        
+        // Apply screen shake effect
+        if (screenShake > 0) {
+            const shakeX = (Math.random() - 0.5) * screenShake;
+            const shakeY = (Math.random() - 0.5) * screenShake;
+            CTX.translate(shakeX, shakeY);
+            screenShake *= 0.9;
+            if (screenShake < 0.5) screenShake = 0;
+        }
+        
+        // Update slow motion effect
+        if (slowMotion > 0) {
+            slowMotion--;
+            if (slowMotion <= 0) {
+                CANVAS.style.filter = 'none';
             }
         }
         
-        // Add standard actions
-        const standardActionsList = Object.values(standardActions);
-        
-        // Prioritize interesting contextual actions
-        while (availableActions.length < 4 && standardActionsList.length > 0) {
-            const randomIndex = Math.floor(Math.random() * standardActionsList.length);
-            availableActions.push(standardActionsList[randomIndex]);
-            standardActionsList.splice(randomIndex, 1);
+        // Update and draw game objects
+        if (gameState === 'playing') {
+            // Update obstacles
+            obstacles.forEach(obstacle => obstacle.update());
+            
+            // Update targets
+            targets.forEach(target => target.update());
+            
+            // Update power-ups
+            powerUps.forEach(powerUp => powerUp.update());
+            
+            // Update player
+            player.update();
+            
+            // Draw obstacles
+            obstacles.forEach(obstacle => obstacle.draw());
+            
+            // Draw targets
+            targets.forEach(target => target.draw());
+            
+            // Draw power-ups
+            powerUps.forEach(powerUp => powerUp.draw());
+            
+            // Draw player
+            player.draw();
         }
         
-        // Shuffle and limit to 4 actions
-        availableActions = shuffleArray(availableActions).slice(0, 4);
-        
-        // Update button text and handlers
-        actionButtons.forEach((button, index) => {
-            if (index < availableActions.length) {
-                button.textContent = availableActions[index].text;
-                button.onclick = () => {
-                    handleAction(availableActions[index]);
-                };
-                button.disabled = false;
+        // Update and draw particles
+        particles.forEach((particle, index) => {
+            particle.x += particle.vx;
+            particle.y += particle.vy;
+            particle.lifetime--;
+            particle.alpha = particle.lifetime / particle.maxLifetime;
+            
+            if (particle.lifetime <= 0) {
+                particles.splice(index, 1);
             } else {
-                button.textContent = "";
-                button.onclick = null;
-                button.disabled = true;
+                CTX.beginPath();
+                CTX.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+                CTX.fillStyle = particle.color + Math.floor(particle.alpha * 255).toString(16).padStart(2, '0');
+                CTX.fill();
             }
         });
-    }
-
-    function shuffleArray(array) {
-        const newArray = [...array];
-        for (let i = newArray.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-        }
-        return newArray;
-    }
-
-    function handleAction(action) {
-        // Disable buttons during action processing
-        actionButtons.forEach(button => {
-            button.disabled = true;
-        });
         
-        // Special handling for "move" action
-        if (action.text === "Go elsewhere") {
-            showLocationOptions();
-            return;
+        // Reset transformation after screen shake
+        if (screenShake > 0) {
+            CTX.setTransform(1, 0, 0, 1, 0, 0);
         }
         
-        // Execute the action effect
-        const result = action.effect();
-        
-        // Update narrative text with the result
-        updateNarrativeText(result);
-        
-        // Update internal monologue based on virtue levels and action type
-        updateRandomInternalMonologue(action.type);
-        
-        // Re-enable buttons and update available actions after a short delay
-        setTimeout(() => {
-            actionButtons.forEach(button => {
-                button.disabled = false;
-            });
-            updateAvailableActions();
-        }, 1500);
+        // Continue game loop
+        animationFrameId = requestAnimationFrame(gameLoop);
     }
-
-    function updateRandomInternalMonologue(actionType) {
-        const totalVirtue = gameState.compassion + gameState.insight + gameState.courage;
-        
-        const lowVirtueThoughts = [
-            "Why am I doing this? These people don't care about me.",
-            "This silence is maddening. What's the point?",
-            "I feel empty, like my actions mean nothing.",
-            "I could just leave. No one would notice or care."
-        ];
-        
-        const mediumVirtueThoughts = [
-            "There's something to learn here if I'm patient.",
-            "Sometimes action speaks more than words.",
-            "This village has its own rhythm. I'm beginning to understand.",
-            "My past doesn't define me. My actions here do."
-        ];
-        
-        const highVirtueThoughts = [
-            "Every small kindness ripples outward.",
-            "In silence, I hear truths that words often hide.",
-            "There's profound peace in being present.",
-            "The path to redemption isn't straight, but I'ing my way."
-        ];
-        
-        let thoughtPool;
-        if (totalVirtue < 90) {
-            thoughtPool = lowVirtueThoughts;
-        } else if (totalVirtue < 180) {
-            thoughtPool = mediumVirtueThoughts;
-        } else {
-            thoughtPool = highVirtueThoughts;
-        }
-        
-        // Sometimes add thoughts related to sleeplessness
-        if (gameState.sleeplessness > 50 && Math.random() < 0.3) {
-            updateInternalMonologue("My thoughts are foggy. I need rest soon.");
-            return;
-        }
-        
-        // Action-specific thoughts override random ones sometimes
-        if (actionType === "help" && Math.random() < 0.5) {
-            updateInternalMonologue("Helping feels right. Maybe this is why I'm here.");
-            return;
-        }
-        
-        if (actionType === "observe" && gameState.insight > 50) {
-            updateInternalMonologue("I see patterns now that were invisible before. Silence has sharpened my senses.");
-            return;
-        }
-        
-        updateInternalMonologue(thoughtPool[Math.floor(Math.random() * thoughtPool.length)]);
-    }
-
-    function showLocationOptions() {
-        // Clear current buttons
-        actionButtons.forEach(button => {
-            button.textContent = "";
-            button.onclick = null;
-        });
-        
-        // Get nearby locations
-        const nearbyLocations = {
-            village_entrance: ["village_square", "forest_edge"],
-            village_square: ["village_entrance", "inn", "elder_home", "farm", "healers_hut"],
-            inn: ["village_square"],
-            healers_hut: ["village_square", "forest_edge"],
-            elder_home: ["village_square"],
-            farm: ["village_square", "river"],
-            forest_edge: ["village_entrance", "healers_hut", "river"],
-            river: ["farm", "forest_edge"]
-        };
-        
-        const options = nearbyLocations[gameState.location] || [];
-        
-        // Update narrative text
-        updateNarrativeText("Where would you like to go?");
-        
-        // Update buttons with location options
-        options.forEach((location, index) => {
-            if (index < actionButtons.length) {
-                actionButtons[index].textContent = locations[location].name;
-                actionButtons[index].onclick = () => {
-                    changeLocation(location);
-                };
-                actionButtons[index].disabled = false;
-            }
-        });
-        
-        // Add "Stay here" option to the last button
-        const lastButtonIndex = Math.min(options.length, actionButtons.length - 1);
-        actionButtons[lastButtonIndex].textContent = "Stay here";
-        actionButtons[lastButtonIndex].onclick = () => {
-            updateNarrativeText("You decide to remain where you are.");
-            updateAvailableActions();
-        };
-    }
-
-    function endDay() {
-        // Log the day's activities
-        gameState.logEntries.push({
-            day: gameState.day,
-            virtueChanges: { ...gameState.dailyVirtueChanges }
-        });
-        
-        // Reset daily virtue changes
-        gameState.dailyVirtueChanges = {
-            compassion: 0,
-            insight: 0,
-            courage: 0
-        };
-        
-        // Update log display
-        updateLogDisplay();
-        
-        // Special handling for excessive sleeplessness at day end
-        if (gameState.sleeplessness > 80) {
-            reduceSleeplessness(30); // Forced rest overnight
-            updateNarrativeText("Exhaustion claims you as night falls. Your sleep is troubled by strange dreams.");
-        } else {
-            reduceSleeplessness(20); // Normal overnight recovery
-        }
-    }
-
-    function startNewDay() {
-        // Update day display
-        dayDisplay.textContent = `Day ${gameState.day}`;
-        timeDisplay.textContent = gameState.timeUnits[gameState.timeUnit];
-        
-        // Reset NPC moods
-        Object.keys(gameState.npcMoods).forEach(npc => {
-            const moodOptions = ["happy", "neutral", "irritable", "thoughtful", "sad"];
-            gameState.npcMoods[npc] = moodOptions[Math.floor(Math.random() * moodOptions.length)];
-        });
-        
-        // New day message
-        if (gameState.day === 7) {
-            updateNarrativeText("You wake to your seventh and final day. There's a sense that today's choices will shape your legacy.");
-            updateInternalMonologue("My time here draws to a close. What mark will I leave?");
-        } else {
-            updateNarrativeText(`A new day dawns in the village. Activity begins for Day ${gameState.day}.`);
-            
-            // Dynamic internal monologue based on progress
-            if (gameState.villageMorale < 30) {
-                updateInternalMonologue("There's a heaviness in the air. My presence isn't helping.");
-            } else if (gameState.villageMorale > 70) {
-                updateInternalMonologue("There's warmth in how people move today. Perhaps I'm making a difference.");
-            } else {
-                updateInternalMonologue("Another day of silence stretches before me.");
-            }
-        }
-        
-        // Check for special events
-        checkForSpecialEvents();
-        
-        // Move to morning position
-        changeLocation("village_square");
-    }
-
-    function checkForSpecialEvents() {
-        // Check each story situation to see if conditions are met
-        Object.keys(storySituations).forEach(key => {
-            const situation = storySituations[key];
-            
-            // Skip if this situation has already occurred
-            if (gameState.storyFlags[situation.flag]) return;
-            
-            // Check requirements
-            let requirementsMet = true;
-            
-            if (situation.requirements.location && gameState.location !== situation.requirements.location) {
-                requirementsMet = false;
-            }
-            
-            if (situation.requirements.insight && gameState.insight < situation.requirements.insight) {
-                requirementsMet = false;
-            }
-            
-            if (situation.requirements.compassion && gameState.compassion < situation.requirements.compassion) {
-                requirementsMet = false;
-            }
-            
-            if (situation.requirements.courage && gameState.courage < situation.requirements.courage) {
-                requirementsMet = false;
-            }
-            
-            if (situation.requirements.combinedVirtue && 
-                (gameState.compassion + gameState.insight + gameState.courage) < situation.requirements.combinedVirtue) {
-                requirementsMet = false;
-            }
-            
-            if (situation.requirements.sleeplessness && gameState.sleeplessness < situation.requirements.sleeplessness) {
-                requirementsMet = false;
-            }
-            
-            if (situation.requirements.hasItem && gameState.items.length === 0) {
-                requirementsMet = false;
-            }
-            
-            if (situation.requirements.anyRelationship) {
-                let maxRelationship = -100;
-                Object.values(gameState.npcRelationships).forEach(value => {
-                    maxRelationship = Math.max(maxRelationship, value);
-                });
-                
-                if (maxRelationship < situation.requirements.anyRelationship) {
-                    requirementsMet = false;
-                }
-            }
-            
-            // Trigger the situation if all requirements are met
-            if (requirementsMet && (!situation.occurs || situation.occurs === true)) {
-                triggerSpecialEvent(key);
-                
-                // Mark as occurred
-                gameState.storyFlags[situation.flag] = true;
-                
-                // Apply virtue changes
-                if (situation.virtueChanges) {
-                    if (situation.virtueChanges.compassion) {
-                        gameState.compassion = Math.max(0, Math.min(100, gameState.compassion + situation.virtueChanges.compassion));
-                        gameState.dailyVirtueChanges.compassion += situation.virtueChanges.compassion;
-                    }
-                    
-                    if (situation.virtueChanges.insight) {
-                        gameState.insight = Math.max(0, Math.min(100, gameState.insight + situation.virtueChanges.insight));
-                        gameState.dailyVirtueChanges.insight += situation.virtueChanges.insight;
-                    }
-                    
-                    if (situation.virtueChanges.courage) {
-                        gameState.courage = Math.max(0, Math.min(100, gameState.courage + situation.virtueChanges.courage));
-                        gameState.dailyVirtueChanges.courage += situation.virtueChanges.courage;
-                    }
-                }
-            }
-        });
-    }
-
-    function triggerSpecialEvent(situationKey) {
-        const situation = storySituations[situationKey];
-        
-        updateNarrativeText(situation.text);
-        updateInternalMonologue(situation.internalText);
-        
-        // Special handling for specific events
-        if (situationKey === "brokenVow") {
-            offerVowBreakingChoice();
-        }
-    }
-
-    function offerVowBreakingChoice() {
-        // Disable normal actions
-        actionButtons.forEach(button => {
-            button.disabled = true;
-        });
-        
-        // Create specific choices for this moment
-        actionButtons[0].textContent = "Break your vow and speak";
-        actionButtons[0].onclick = () => {
-            breakVow();
-        };
-        actionButtons[0].disabled = false;
-        
-        actionButtons[1].textContent = "Maintain your silence";
-        actionButtons[1].onclick = () => {
-            maintainVow();
-        };
-        actionButtons[1].disabled = false;
-    }
-
-    function breakVow() {
-        gameState.hasBrokenVow = true;
-        
-        // Determine if this was a good or bad time to break the vow
-        const totalVirtue = gameState.compassion + gameState.insight + gameState.courage;
-        
-        if (totalVirtue > 200) {
-            // Good outcome
-            updateNarrativeText("Your voice emerges, rough but firm. The truth you speak hangs in the air, powerful in its rarity.");
-            updateInternalMonologue("There is a time for silence and a time for speech. I chose well.");
-            
-            // Positive effects
-            gameState.compassion = 100;
-            increaseVillageMorale(20);
-            Object.keys(gameState.npcRelationships).forEach(npc => {
-                increaseNPCRelationship(npc, 15);
-            });
-        } else {
-            // Negative outcome
-            updateNarrativeText("Words spill from your lips, breaking your vow. Your voice fails you, coming out wrong.");
-            updateInternalMonologue("I broke my vow for nothing. The weight of failure is crushing.");
-            
-            // Negative effects
-            gameState.compassion -= 15;
-            gameState.insight -= 10;
-            decreaseVillageMorale(15);
-            Object.keys(gameState.npcRelationships).forEach(npc => {
-                decreaseNPCRelationship(npc, 10);
-            });
-        }
-        
-        // After a delay, restore normal gameplay
-        setTimeout(() => {
-            updateAvailableActions();
-        }, 3000);
-    }
-
-    function maintainVow() {
-        updateNarrativeText("Despite the urge to speak, you maintain your silence. You find other ways to communicate.");
-        updateInternalMonologue("The hardest silence is often the most meaningful. I remain true to my path.");
-        
-        // Positive effects for maintaining discipline
-        gameState.insight += 10;
-        gameState.courage += 5;
-        
-        // After a delay, restore normal gameplay
-        setTimeout(() => {
-            updateAvailableActions();
-        }, 3000);
-    }
-
-    function updateLogDisplay() {
-        // Clear previous log entries
-        logEntries.innerHTML = '';
-        
-        // Add each log entry
-        gameState.logEntries.forEach(entry => {
-            const logDiv = document.createElement('div');
-            logDiv.className = 'log-entry';
-            
-            const dayDiv = document.createElement('div');
-            dayDiv.className = 'log-day';
-            dayDiv.textContent = `Day ${entry.day}`;
-            logDiv.appendChild(dayDiv);
-            
-            // Add virtue changes
-            if (entry.virtueChanges.compassion !== 0) {
-                const compassionDiv = document.createElement('div');
-                compassionDiv.className = `virtue-change ${entry.virtueChanges.compassion > 0 ? 'positive' : 'negative'}`;
-                compassionDiv.textContent = `Compassion: ${entry.virtueChanges.compassion > 0 ? '+' : ''}${entry.virtueChanges.compassion}`;
-                logDiv.appendChild(compassionDiv);
-            }
-            
-            if (entry.virtueChanges.insight !== 0) {
-                const insightDiv = document.createElement('div');
-                insightDiv.className = `virtue-change ${entry.virtueChanges.insight > 0 ? 'positive' : 'negative'}`;
-                insightDiv.textContent = `Insight: ${entry.virtueChanges.insight > 0 ? '+' : ''}${entry.virtueChanges.insight}`;
-                logDiv.appendChild(insightDiv);
-            }
-            
-            if (entry.virtueChanges.courage !== 0) {
-                const courageDiv = document.createElement('div');
-                courageDiv.className = `virtue-change ${entry.virtueChanges.courage > 0 ? 'positive' : 'negative'}`;
-                courageDiv.textContent = `Courage: ${entry.virtueChanges.courage > 0 ? '+' : ''}${entry.virtueChanges.courage}`;
-                logDiv.appendChild(courageDiv);
-            }
-            
-            logEntries.appendChild(logDiv);
-        });
-    }
-
-    function endGame() {
-        gameState.gameEnded = true;
-        
-        // Determine ending based on final state
-        let endingText = "";
-        const totalVirtue = gameState.compassion + gameState.insight + gameState.courage;
-        
-        if (totalVirtue > 250 && gameState.villageMorale > 80) {
-            // Best ending
-            endingText = "Your week ends with a ceremony led by Elder Thaddeus. The village offers gifts and respect. As you prepare to leave, they invite you to return someday. Though your vow ends today, the lessons will speak within you forever.";
-        } else if (totalVirtue > 200 || gameState.villageMorale > 70) {
-            // Good ending
-            endingText = "As your time in the village ends, you  yourself changed. The silent days gave you perspective, and your actions left the village better than you found it. You walk forward with greater purpose.";
-        } else if (totalVirtue > 120 || gameState.villageMorale > 40) {
-            // Neutral ending
-            endingText = "Your week of silence ends quietly. Some bid you farewell, others simply observe. The experience taught you something, though what lessons you'll carry forward remains to be seen.";
-        } else {
-            // Bad ending
-            endingText = "You slip away before dawn on the seventh day, leaving as quietly as you arrived. Your presence brought little comfort here, and your vow feels more burden than wisdom. Perhaps redemption awaits elsewhere.";
-        }
-        
-        // Display ending
-        endingText += `\n\nCompassion: ${gameState.compassion}/100\nInsight: ${gameState.insight}/100\nCourage: ${gameState.courage}/100\nVillage Morale: ${gameState.villageMorale}%`;
-        
-        endingText = endingText.replace(/\n/g, '<br>');
-        endingText.textContent = endingText;
-        
-        endingScreen.classList.remove('hidden');
-    }
-
-    // Event Listeners - FIXED VERSION
-    if (startGameButton) {
-        console.log("Adding click listener to start button");
-        startGameButton.addEventListener('click', function() {
-            console.log("Start button clicked!");
-            introScreen.classList.add('hidden');
-            gameContainer.classList.remove('hidden');
-            
-            // Initialize game
-            initializeGame();
-        });
-    } else {
-        console.error("Start button not found!");
-    }
-
-    if (logButton) {
-        logButton.addEventListener('click', () => {
-            logModal.classList.remove('hidden');
-        });
-    }
-
-    if (closeButton) {
-        closeButton.addEventListener('click', () => {
-            logModal.classList.add('hidden');
-        });
-    }
-
-    if (playAgainButton) {
-        playAgainButton.addEventListener('click', () => {
-            endingScreen.classList.add('hidden');
-            introScreen.classList.remove('hidden');
-            gameContainer.classList.add('hidden');
-        });
-    }
-
+    
     // Initialize the game
-    function initializeGame() {
-        // Reset game state
-        gameState = {
-            day: 1,
-            timeUnit: 0,
-            timeUnits: ['Morning', 'Afternoon', 'Evening', 'Night'],
-            location: 'village_entrance',
-            
-            compassion: 20,
-            insight: 20,
-            courage: 20,
-            perceptionScore: 15,
-            sleeplessness: 0,
-            
-            items: [],
-            learnedGestures: [],
-            
-            villageMorale: 50,
-            npcRelationships: {
-                elder: 0,
-                innkeeper: 0,
-                healer: 0,
-                farmer: 0,
-                child: 0
-            },
-            npcMoods: {
-                elder: 'neutral',
-                innkeeper: 'neutral',
-                healer: 'neutral',
-                farmer: 'neutral',
-                child: 'neutral'
-            },
-            
-            logEntries: [],
-            hasBrokenVow: false,
-            gameEnded: false,
-            
-            dailyVirtueChanges: {
-                compassion: 0,
-                insight: 0,
-                courage: 0
-            },
-            
-            storyFlags: {}
-        };
-        
-        // Reset location first visits
-        Object.keys(locations).forEach(key => {
-            locations[key].firstVisit = true;
-        });
-        
-        // Choose a random village challenge
-        gameState.villageChallenge = villageChallenges[Math.floor(Math.random() * villageChallenges.length)];
-        
-        // Update displays
-        dayDisplay.textContent = `Day ${gameState.day}`;
-        timeDisplay.textContent = gameState.timeUnits[gameState.timeUnit];
-        
-        // Start at village entrance
-        changeLocation('village_entrance');
-        
-        // First-time game message
-        updateNarrativeText("A weathered sign marks the entrance to the small village. Paths wind between cottages, smoke curling from chimneys.");
-        updateInternalMonologue("My vow of silence weighs heavily, but it's a burden I've chosen. Perhaps here, I'll find what I seek.");
-    }
-
-    // Note: We don't need to initialize the game here as that's handled by the start button event
-}); // This closes the DOMContentLoaded event listener
+    setupCanvas();
+    showScreen('start');
+});

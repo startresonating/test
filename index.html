@@ -2,64 +2,76 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Actions Speak Louder: A Text-Based Virtue Simulator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bounce Blitz!</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Source+Sans+Pro:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div id="intro-screen">
-        <div class="fade-in">
-            <h1>"Until my actions speak larger than any words could, my lips are sealed."</h1>
-            <button id="start-game">Begin Your Journey</button>
-        </div>
-    </div>
-
-    <div id="game-container" class="hidden">
-        <div id="top-bar">
-            <div id="day-display">Day 1</div>
-            <div id="time-display">Morning</div>
-            <button id="log-button">Log</button>
-        </div>
-
-        <div id="game-content">
-            <div id="location-image-container">
-                <div id="location-image"></div>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        
+        <div id="ui-container">
+            <div id="start-screen" class="game-ui active">
+                <h1 class="title float">BOUNCE BLITZ!</h1>
+                <h2 class="subtitle">The Ultimate Bouncy Challenge</h2>
+                
+                <div id="difficulty-container">
+                    <h3 style="margin-bottom: 10px;">Select Difficulty</h3>
+                    <div class="difficulty-buttons">
+                        <button class="difficulty-button selected" data-difficulty="1">Easy</button>
+                        <button class="difficulty-button" data-difficulty="2">Medium</button>
+                        <button class="difficulty-button" data-difficulty="3">Hard</button>
+                        <button class="difficulty-button" data-difficulty="4">Expert</button>
+                        <button class="difficulty-button" data-difficulty="5">Insane!</button>
+                    </div>
+                </div>
+                
+                <div id="tutorial-container">
+                    <div id="tutorial-text">Tap and swipe to launch your bouncer! Collect power-ups and avoid obstacles. Complete each level by hitting all the targets!</div>
+                </div>
+                
+                <button id="start-button" class="button">START GAME</button>
             </div>
-
-            <div id="text-area">
-                <div id="narrative-text"></div>
-                <div id="internal-monologue"></div>
+            
+            <div id="game-over-screen" class="game-ui">
+                <h1 class="title">GAME OVER!</h1>
+                <div class="stats-container">
+                    <p id="final-score">Score: 0</p>
+                    <p id="final-level">Level: 1</p>
+                </div>
+                <button id="restart-button" class="button">PLAY AGAIN</button>
+                <button id="menu-button-gameover" class="button">MAIN MENU</button>
             </div>
-
-            <div id="action-grid">
-                <button class="action-button" id="action-1"></button>
-                <button class="action-button" id="action-2"></button>
-                <button class="action-button" id="action-3"></button>
-                <button class="action-button" id="action-4"></button>
+            
+            <div id="level-complete-screen" class="game-ui">
+                <h1 class="title">LEVEL COMPLETE!</h1>
+                <div class="stats-container">
+                    <p id="level-score">Score: 0</p>
+                    <p id="level-time">Time: 0s</p>
+                    <p id="level-bonus">Bonus: +0</p>
+                </div>
+                <button id="next-level-button" class="button">NEXT LEVEL</button>
             </div>
-        </div>
-
-        <div id="log-modal" class="modal hidden">
-            <div class="modal-content">
-                <span class="close-button">&times;</span>
-                <h2>Wanderer's Journey</h2>
-                <div id="log-entries"></div>
+            
+            <div id="pause-screen" class="game-ui">
+                <h1 class="title">PAUSED</h1>
+                <button id="resume-button" class="button">RESUME</button>
+                <button id="menu-button-pause" class="button">MAIN MENU</button>
             </div>
-        </div>
-
-        <div id="ending-screen" class="modal hidden">
-            <div class="modal-content ending">
-                <h2>Your Journey Ends</h2>
-                <div id="ending-text"></div>
-                <button id="play-again">Begin Anew</button>
+            
+            <div id="game-hud">
+                <div class="score-display">Score: <span id="score">0</span></div>
+                <div class="level-display">Level: <span id="level">1</span></div>
+                <div id="pause-button">❚❚</div>
+                <div class="lives-container" id="lives-container"></div>
+                <div class="progress-container">
+                    <div id="progress-bar"></div>
+                </div>
             </div>
-        </div>
-
-        <div id="item-notification" class="hidden">
-            <div id="item-message"></div>
+            
+            <div id="level-indicator">LEVEL 1</div>
+            <div id="combo-indicator"></div>
+            <div id="power-up-indicator"></div>
         </div>
     </div>
 

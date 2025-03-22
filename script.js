@@ -1356,7 +1356,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function endGame() {
+function endGame() {
         gameState.gameEnded = true;
         
         // Determine ending based on final state
@@ -1385,7 +1385,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         endingScreen.classList.remove('hidden');
     }
-// Event Listeners
+
+    // Event Listeners - FIXED VERSION
     if (startGameButton) {
         console.log("Adding click listener to start button");
         startGameButton.addEventListener('click', function() {
@@ -1419,30 +1420,6 @@ document.addEventListener('DOMContentLoaded', () => {
             gameContainer.classList.add('hidden');
         });
     }
-    }
-
-    if (closeButton) {
-        closeButton.addEventListener('click', () => {
-            logModal.classList.add('hidden');
-        });
-    }
-
-    if (playAgainButton) {
-        playAgainButton.addEventListener('click', () => {
-            endingScreen.classList.add('hidden');
-            introScreen.classList.remove('hidden');
-            gameContainer.classList.add('hidden');
-    });
-
-    closeButton.addEventListener('click', () => {
-        logModal.classList.add('hidden');
-    });
-
-    playAgainButton.addEventListener('click', () => {
-        endingScreen.classList.add('hidden');
-        introScreen.classList.remove('hidden');
-        gameContainer.classList.add('hidden');
-    });
 
     // Initialize the game
     function initializeGame() {
@@ -1511,6 +1488,5 @@ document.addEventListener('DOMContentLoaded', () => {
         updateInternalMonologue("My vow of silence weighs heavily, but it's a burden I've chosen to bear. Perhaps in this place, I'll find what I'm seeking.");
     }
 
-    // Initialize the game when the page loads
-    // Already covered by the DOMContentLoaded event at the top
-});
+    // Note: We don't need to initialize the game here as that's handled by the start button event
+}); // This closes the DOMContentLoaded event listener

@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let bugSpeed = 50; // pixels per second
     let lastBugSpawn = 0;
     let lastDifficultyIncrease = 0;
+    let isDragging = false; // Track if the player is dragging Percy
 
     // Field dimensions (1.6:1 ratio)
     let fieldWidth, fieldHeight;
@@ -35,14 +36,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function calculateGameElements() {
         const minSize = Math.min(canvas.width, canvas.height);
         
-        // Field is 1.6:1 ratio
-        fieldWidth = minSize * 0.4;
+        // Field is 1.6:1 ratio (50% smaller)
+        fieldWidth = minSize * 0.2; // 50% of original 0.4
         fieldHeight = fieldWidth / 1.6;
         fieldX = canvas.width / 2;
         fieldY = canvas.height / 2;
         
-        // Elephant is a circle of similar size
-        elephantRadius = Math.sqrt((fieldWidth * fieldHeight) / Math.PI);
+        // Elephant is a circle of similar size (50% smaller)
+        elephantRadius = Math.sqrt((fieldWidth * fieldHeight) / Math.PI) * 0.5; // 50% smaller
         elephantX = fieldX;
         elephantY = fieldY;
     }
@@ -177,12 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        // Update elephant position based on mouse
-        canvas.addEventListener('mousemove', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            elephantX = e.clientX - rect.left;
-            elephantY = e.clientY - rect.top;
-        });
+        // Don't add event listeners in update loop
         
         // Draw the game
         draw();
@@ -218,6 +214,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Event listeners
     restartButton.addEventListener('click', startGame);
+    
+    // Mouse and touch event listeners for dragging Percy
+    function handleStart(e) {
+        // Prevent default behavior for touch events
+        if (e.type === 'touchstart') {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const touchX = touch.clientX - rect.left;
+            const touchY = touch.clientY - rect.top;
+            
+            // Check if touch is on the elephant
+            const dx = touchX - elephantX;
+            const dy = touchY - elephantY;
+            if (Math.sqrt(dx * dx + dy * dy) <= elephantRadius * 2) {
+                isDragging = true;
+            }
+        } else {
+            isDragging = true;
+        }
+    }
+    
+    function handleMove(e) {
+        if (!isDragging || !gameRunning) return;
+        
+        const rect = canvas.getBoundingClientRect();
+        if (e.type === 'touchmove') {
+            e.preventDefault();
+            const touch = e.touches[0];
+            elephantX = touch.clientX - rect.left;
+            elephantY = touch.clientY - rect.top;
+        } else {
+            elephantX = e.clientX - rect.left;
+            elephantY = e.clientY - rect.top;
+        }
+    }
+    
+    function handleEnd() {
+        isDragging = false;
+    }
+    
+    // Add mouse events
+    canvas.addEventListener('mousedown', handleStart);
+    canvas.addEventListener('mousemove', handleMove);
+    canvas.addEventListener('mouseup', handleEnd);
+    canvas.addEventListener('mouseout', handleEnd);
+    
+    // Add touch events for mobile
+    canvas.addEventListener('touchstart', handleStart, { passive: false });
+    canvas.addEventListener('touchmove', handleMove, { passive: false });
+    canvas.addEventListener('touchend', handleEnd);
+    canvas.addEventListener('touchcancel', handleEnd);
 
     // Start game automatically when page loads
     startGame();

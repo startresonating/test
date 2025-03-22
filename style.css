@@ -25,6 +25,11 @@ body {
     width: 100%;
     height: 100%;
     background-color: #9fd9ea; /* Sky blue background */
+    cursor: grab; /* Change cursor to indicate draggable */
+}
+
+#game-canvas:active {
+    cursor: grabbing; /* Change cursor when dragging */
 }
 
 #game-over {

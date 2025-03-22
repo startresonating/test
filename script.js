@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("DOM content loaded");
+    
     // DOM Elements
     const introScreen = document.getElementById('intro-screen');
     const startGameButton = document.getElementById('start-game');
@@ -1383,18 +1385,38 @@ document.addEventListener('DOMContentLoaded', () => {
         
         endingScreen.classList.remove('hidden');
     }
-
     // Event Listeners
-    startGameButton.addEventListener('click', () => {
-        introScreen.classList.add('hidden');
-        gameContainer.classList.remove('hidden');
-        
-        // Initialize game
-        initializeGame();
-    });
+    if (startGameButton) {
+        console.log("Adding click listener to start button");
+        startGameButton.addEventListener('click', function() {
+            console.log("Start button clicked!");
+            introScreen.classList.add('hidden');
+            gameContainer.classList.remove('hidden');
+            
+            // Initialize game
+            initializeGame();
+        });
+    } else {
+        console.error("Start button not found!");
+    }
 
-    logButton.addEventListener('click', () => {
-        logModal.classList.remove('hidden');
+    if (logButton) {
+        logButton.addEventListener('click', () => {
+            logModal.classList.remove('hidden');
+        });
+    }
+
+    if (closeButton) {
+        closeButton.addEventListener('click', () => {
+            logModal.classList.add('hidden');
+        });
+    }
+
+    if (playAgainButton) {
+        playAgainButton.addEventListener('click', () => {
+            endingScreen.classList.add('hidden');
+            introScreen.classList.remove('hidden');
+            gameContainer.classList.add('hidden');
     });
 
     closeButton.addEventListener('click', () => {

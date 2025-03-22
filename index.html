@@ -2,79 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bounce Blitz!</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Polygon Tower Stacker</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="game-container">
+        <div id="timer">10</div>
+        <div id="level-display">Level: 1</div>
+        <div id="polygon-count">Polygons: 2/2</div>
         <canvas id="game-canvas"></canvas>
-        
-        <div id="ui-container">
-            <div id="start-screen" class="game-ui active">
-                <h1 class="title float">BOUNCE BLITZ!</h1>
-                <h2 class="subtitle">The Ultimate Bouncy Challenge</h2>
-                
-                <div id="difficulty-container">
-                    <h3 style="margin-bottom: 10px;">Select Difficulty</h3>
-                    <div class="difficulty-buttons">
-                        <button class="difficulty-button selected" data-difficulty="1">Easy</button>
-                        <button class="difficulty-button" data-difficulty="2">Medium</button>
-                        <button class="difficulty-button" data-difficulty="3">Hard</button>
-                        <button class="difficulty-button" data-difficulty="4">Expert</button>
-                        <button class="difficulty-button" data-difficulty="5">Insane!</button>
-                    </div>
-                </div>
-                
-                <div id="tutorial-container">
-                    <div id="tutorial-text">Tap and swipe to launch your bouncer! Collect power-ups and avoid obstacles. Complete each level by hitting all the targets!</div>
-                </div>
-                
-                <button id="start-button" class="button">START GAME</button>
-            </div>
-            
-            <div id="game-over-screen" class="game-ui">
-                <h1 class="title">GAME OVER!</h1>
-                <div class="stats-container">
-                    <p id="final-score">Score: 0</p>
-                    <p id="final-level">Level: 1</p>
-                </div>
-                <button id="restart-button" class="button">PLAY AGAIN</button>
-                <button id="menu-button-gameover" class="button">MAIN MENU</button>
-            </div>
-            
-            <div id="level-complete-screen" class="game-ui">
-                <h1 class="title">LEVEL COMPLETE!</h1>
-                <div class="stats-container">
-                    <p id="level-score">Score: 0</p>
-                    <p id="level-time">Time: 0s</p>
-                    <p id="level-bonus">Bonus: +0</p>
-                </div>
-                <button id="next-level-button" class="button">NEXT LEVEL</button>
-            </div>
-            
-            <div id="pause-screen" class="game-ui">
-                <h1 class="title">PAUSED</h1>
-                <button id="resume-button" class="button">RESUME</button>
-                <button id="menu-button-pause" class="button">MAIN MENU</button>
-            </div>
-            
-            <div id="game-hud">
-                <div class="score-display">Score: <span id="score">0</span></div>
-                <div class="level-display">Level: <span id="level">1</span></div>
-                <div id="pause-button">❚❚</div>
-                <div class="lives-container" id="lives-container"></div>
-                <div class="progress-container">
-                    <div id="progress-bar"></div>
-                </div>
-            </div>
-            
-            <div id="level-indicator">LEVEL 1</div>
-            <div id="combo-indicator"></div>
-            <div id="power-up-indicator"></div>
+        <div id="message-overlay">
+            <div id="message-text"></div>
         </div>
     </div>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

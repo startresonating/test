@@ -31,7 +31,7 @@ body {
     border-radius: 5px;
 }
 
-/* Stars background */
+/* Stars background with twinkling effect */
 #game::before {
     content: '';
     position: absolute;
@@ -49,17 +49,47 @@ body {
         0 0,
         25px 25px,
         50px 50px;
+    animation: twinkle 4s infinite alternate;
+}
+
+@keyframes twinkle {
+    0% {
+        opacity: 0.7;
+    }
+    25% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+    75% {
+        opacity: 0.9;
+    }
+    100% {
+        opacity: 0.6;
+    }
 }
 
 .spaceship {
     position: absolute;
-    width: 60px;
-    height: 30px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 30'%3E%3Cpath d='M60 15L45 5V12H15C8 12 0 15 0 15S8 18 15 18H45V25L60 15Z' fill='silver'/%3E%3Ccircle cx='20' cy='15' r='5' fill='%2300BFFF'/%3E%3C/svg%3E");
-    background-size: contain;
-    background-repeat: no-repeat;
+    width: 50px;
+    height: 50px;
+    background-color: #FFC0CB; /* Pink color for the boob */
+    border-radius: 50%; /* Make it a perfect circle */
     z-index: 10;
     transition: transform 0.1s;
+}
+
+/* Nipple on the boob */
+.spaceship::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: #FF1493; /* Darker pink */
+    border-radius: 50%;
+    top: 20px;
+    left: 20px;
 }
 
 .laser {
@@ -153,7 +183,7 @@ body {
     z-index: 25;
     text-align: center;
     opacity: 0;
-    animation: fadeInOut 2s ease-in-out;
+    animation: fadeInOut 2s ease-in-out, colorChange 0.3s infinite;
 }
 
 @keyframes fadeInOut {
@@ -161,4 +191,14 @@ body {
     20% { opacity: 1; }
     80% { opacity: 1; }
     100% { opacity: 0; }
+}
+
+@keyframes colorChange {
+    0% { color: #FF0000; text-shadow: 0 0 10px #FF0000, 0 0 20px #FF0000; }
+    16% { color: #FF7F00; text-shadow: 0 0 10px #FF7F00, 0 0 20px #FF7F00; }
+    33% { color: #FFFF00; text-shadow: 0 0 10px #FFFF00, 0 0 20px #FFFF00; }
+    50% { color: #00FF00; text-shadow: 0 0 10px #00FF00, 0 0 20px #00FF00; }
+    66% { color: #0000FF; text-shadow: 0 0 10px #0000FF, 0 0 20px #0000FF; }
+    83% { color: #4B0082; text-shadow: 0 0 10px #4B0082, 0 0 20px #4B0082; }
+    100% { color: #9400D3; text-shadow: 0 0 10px #9400D3, 0 0 20px #9400D3; }
 }

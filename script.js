@@ -30,18 +30,21 @@ document.addEventListener('DOMContentLoaded', () => {
         "SICK MOVES GWION!",
         "UNSTOPPABLE GWION!",
         "LEGENDARY GWION!",
-        "GWION TAKING FLIGHT!"
+        "GWION TAKING FLIGHT!",
+        "HORNY!", // Added new phrases
+        "SO HORNY",
+        "TITTY ASS!"
     ];
     
     // Game constants
     const JUMP_STRENGTH = -8;
-    const LASER_INTERVAL = 1500; // Time between laser spawns in ms
+    const LASER_INTERVAL = 1650; // Increased by 10% from 1500
     const GAME_WIDTH = game.clientWidth;
     const GAME_HEIGHT = game.clientHeight;
-    const SPACESHIP_WIDTH = 60;
-    const SPACESHIP_HEIGHT = 30;
+    const SPACESHIP_WIDTH = 50; // Changed to make the spaceship (boob) a circle
+    const SPACESHIP_HEIGHT = 50; // Changed to make the spaceship (boob) a circle
     const LASER_WIDTH = 40;
-    const GAP_SIZE = 150; // Space between laser beams
+    const GAP_SIZE = 172.5; // Increased by 15% from 150
     
     // Initial spaceship position
     spaceship.style.left = '100px';
@@ -173,11 +176,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 score++;
                 scoreDisplay.textContent = score;
                 
-                // Increase game speed periodically
-                if (score % 5 === 0) {
-                    gameSpeed += 0.2;
+                // Show Gwion message every 3 lasers instead of 5
+                if (score % 3 === 0) {
+                    // Increase game speed by 5% every 3 lasers
+                    gameSpeed *= 1.05;
                     
-                    // Show Gwion message every 5 lasers if not already showing one
+                    // Show message if not already showing one
                     if (!gwionMessageActive) {
                         showGwionMessage();
                     }
@@ -199,27 +203,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function checkCollision(laser) {
-        // Simple collision detection with 30% reduced hitbox
-        const hitboxReduction = 0.3; // 30% reduction
-        
-        // Calculate reduced hitbox dimensions
-        const hitboxWidthReduction = SPACESHIP_WIDTH * hitboxReduction / 2; // Split reduction between left and right
-        const hitboxHeightReduction = SPACESHIP_HEIGHT * hitboxReduction / 2; // Split between top and bottom
-        
-        const spaceshipLeft = 100 + hitboxWidthReduction;
-        const spaceshipRight = (100 + SPACESHIP_WIDTH) - hitboxWidthReduction;
-        const spaceshipTop = spaceshipPosition + hitboxHeightReduction;
-        const spaceshipBottom = (spaceshipPosition + SPACESHIP_HEIGHT) - hitboxHeightReduction;
+        // Circle collision detection for the boob
+        const circleRadius = SPACESHIP_WIDTH / 2 * 0.7; // 30% reduced hitbox for the circle
+        const circleCenterX = 100 + SPACESHIP_WIDTH / 2;
+        const circleCenterY = spaceshipPosition + SPACESHIP_HEIGHT / 2;
         
         // Check if spaceship is within laser x-range
-        if (laser.x <= spaceshipRight && laser.x + LASER_WIDTH >= spaceshipLeft) {
+        if (laser.x <= circleCenterX + circleRadius && laser.x + LASER_WIDTH >= circleCenterX - circleRadius) {
             // Get laser gap position
             const laserBeams = laser.element.querySelectorAll('.laser-beam');
             const gapStart = parseFloat(laserBeams[0].style.height);
             const gapEnd = parseFloat(laserBeams[1].style.top);
             
-            // Check if spaceship is inside the gap
-            if (spaceshipTop < gapStart || spaceshipBottom > gapEnd) {
+            // Check if spaceship circle intersects with laser beams
+            if (circleCenterY - circleRadius < gapStart || circleCenterY + circleRadius > gapEnd) {
                 return true; // Collision detected
             }
         }

@@ -3,22 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Silent Helper</title>
+    <title>Actions Speak Louder: A Text-Based Virtue Simulator</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Source+Sans+Pro:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div id="game-container">
-        <div id="header">The Silent Helper</div>
-        <div id="text-area"></div>
-        <div id="action-grid">
-            <button id="button1" class="action-button"></button>
-            <button id="button2" class="action-button"></button>
-            <button id="button3" class="action-button"></button>
-            <button id="button4" class="action-button"></button>
+    <div id="intro-screen">
+        <div class="fade-in">
+            <h1>"Until my actions speak larger than any words could, my lips are sealed."</h1>
+            <button id="start-game">Begin Your Journey</button>
         </div>
     </div>
-    <button id="restart-button">Play Again</button>
-    
+
+    <div id="game-container" class="hidden">
+        <div id="top-bar">
+            <div id="day-display">Day 1</div>
+            <div id="time-display">Morning</div>
+            <button id="log-button">Log</button>
+        </div>
+
+        <div id="game-content">
+            <div id="location-image-container">
+                <div id="location-image"></div>
+            </div>
+
+            <div id="text-area">
+                <div id="narrative-text"></div>
+                <div id="internal-monologue"></div>
+            </div>
+
+            <div id="action-grid">
+                <button class="action-button" id="action-1"></button>
+                <button class="action-button" id="action-2"></button>
+                <button class="action-button" id="action-3"></button>
+                <button class="action-button" id="action-4"></button>
+            </div>
+        </div>
+
+        <div id="log-modal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <h2>Wanderer's Journey</h2>
+                <div id="log-entries"></div>
+            </div>
+        </div>
+
+        <div id="ending-screen" class="modal hidden">
+            <div class="modal-content ending">
+                <h2>Your Journey Ends</h2>
+                <div id="ending-text"></div>
+                <button id="play-again">Begin Anew</button>
+            </div>
+        </div>
+
+        <div id="item-notification" class="hidden">
+            <div id="item-message"></div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>

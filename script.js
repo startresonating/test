@@ -1,272 +1,368 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const canvas = document.getElementById('game-canvas');
-    const ctx = canvas.getContext('2d');
-    const gameOverElement = document.getElementById('game-over');
-    const gameOverMessage = document.getElementById('game-over-message');
-    const restartButton = document.getElementById('restart-button');
+// Game state
+const gameState = {
+    currentNPC: 0,
+    npcs: [
+        { name: "Old Woman", description: "An old woman struggles to carry a heavy basket of apples.", happiness: 0, visited: false },
+        { name: "Young Boy", description: "A young boy sits on a bench, crying, holding a broken toy cart.", happiness: 0, visited: false },
+        { name: "Merchant", description: "A merchant's stall awning has collapsed, exposing his wares to the harsh sun.", happiness: 0, visited: false }
+    ],
+    gameOver: false
+};
 
-    // Set canvas size to match container
-    function resizeCanvas() {
-        canvas.width = canvas.clientWidth;
-        canvas.height = canvas.clientHeight;
-    }
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
+// DOM elements
+const textArea = document.getElementById("text-area");
+const buttons = [
+    document.getElementById("button1"),
+    document.getElementById("button2"),
+    document.getElementById("button3"),
+    document.getElementById("button4")
+];
+const restartButton = document.getElementById("restart-button");
 
-    // Game state
-    let gameRunning = false;
-    let gameStartTime = 0;
-    let gameTime = 0;
-    let bugs = [];
-    let bugSpawnRate = 1; // bugs per second
-    let bugSpeed = 50; // pixels per second
-    let lastBugSpawn = 0;
-    let lastDifficultyIncrease = 0;
-    let isDragging = false; // Track if the player is dragging Percy
-
-    // Field dimensions (1.6:1 ratio)
-    let fieldWidth, fieldHeight;
-    let fieldX, fieldY;
-
-    // Elephant (same size as field)
-    let elephantRadius;
-    let elephantX, elephantY;
-
-    // Calculate game elements based on canvas size
-    function calculateGameElements() {
-        const minSize = Math.min(canvas.width, canvas.height);
-        
-        // Field is 1.6:1 ratio (50% smaller)
-        fieldWidth = minSize * 0.2; // 50% of original 0.4
-        fieldHeight = fieldWidth / 1.6;
-        fieldX = canvas.width / 2;
-        fieldY = canvas.height / 2;
-        
-        // Elephant is a circle of similar size (50% smaller)
-        elephantRadius = Math.sqrt((fieldWidth * fieldHeight) / Math.PI) * 0.5; // 50% smaller
-        elephantX = fieldX;
-        elephantY = fieldY;
-    }
-
-    // Bug class
-    class Bug {
-        constructor() {
-            this.radius = Math.random() * 3 + 2; // 2-5px
-            this.color = Math.random() > 0.5 ? '#8B4513' : '#000000'; // Brown or black
-            
-            // Spawn from outside the canvas
-            const side = Math.floor(Math.random() * 4); // 0: top, 1: right, 2: bottom, 3: left
-            
-            switch(side) {
-                case 0: // top
-                    this.x = Math.random() * canvas.width;
-                    this.y = -this.radius;
-                    break;
-                case 1: // right
-                    this.x = canvas.width + this.radius;
-                    this.y = Math.random() * canvas.height;
-                    break;
-                case 2: // bottom
-                    this.x = Math.random() * canvas.width;
-                    this.y = canvas.height + this.radius;
-                    break;
-                case 3: // left
-                    this.x = -this.radius;
-                    this.y = Math.random() * canvas.height;
-                    break;
+// Action sets for each NPC
+const npcActions = [
+    // Old Woman actions
+    [
+        {
+            text: "Offer to carry the basket",
+            result: "You gently take the basket from the old woman's hands. The weight surprises you, but you manage to hold it steady. 'Oh, bless you,' she says with relief. 'These old bones aren't what they used to be.'",
+            thought: "It feels good to ease her burden.",
+            happinessChange: 2
+        },
+        {
+            text: "Smile encouragingly",
+            result: "You offer a warm smile to the old woman. She returns it, her face brightening slightly. 'Such a kind face,' she murmurs, shifting the basket in her arms.",
+            thought: "A small gesture can mean a lot.",
+            happinessChange: 1
+        },
+        {
+            text: "Offer a reassuring nod",
+            result: "You nod reassuringly at the old woman. She seems to stand a little straighter, finding some strength in your silent encouragement. The basket still weighs heavily in her arms, but her determination grows.",
+            thought: "Sometimes all people need is acknowledgment.",
+            happinessChange: 1
+        },
+        {
+            text: "Rest",
+            result: "You feel tired. You close your eyes, and feel like you're about to enter a dream, but then you snap back to reality.",
+            thought: "Maybe I should have helped...",
+            happinessChange: 0
+        }
+    ],
+    // Young Boy actions
+    [
+        {
+            text: "Try to fix the toy",
+            result: function() {
+                // Random success or partial success
+                const randomOutcome = Math.random();
+                if (randomOutcome > 0.6) {
+                    return {
+                        result: "You examine the broken toy cart carefully. The wheel has come loose, but the axle is intact. With careful hands, you reattach the wheel. The boy's tears stop as he watches in amazement. When you hand it back, his face lights up with pure joy. 'It works! Thank you!'",
+                        thought: "His smile makes it all worthwhile.",
+                        happinessChange: 3
+                    };
+                } else {
+                    return {
+                        result: "You examine the broken toy cart. The damage is worse than it looked—the axle is bent and a wheel is cracked. You make some adjustments that improve it, but it's still not fully fixed. The boy appreciates your effort though, his sobs quieting to sniffles. 'Thanks for trying,' he says softly.",
+                        thought: "At least I could help a little.",
+                        happinessChange: 2
+                    };
+                }
             }
-            
-            // Calculate direction towards the field
-            const dx = fieldX - this.x;
-            const dy = fieldY - this.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            this.directionX = dx / distance;
-            this.directionY = dy / distance;
+        },
+        {
+            text: "Pat him on the shoulder",
+            result: "You gently pat the boy's shoulder. He looks up at you, tears still streaming down his face, but there's a moment of connection. His crying softens slightly, finding comfort in your presence.",
+            thought: "Sometimes we all need human touch.",
+            happinessChange: 1
+        },
+        {
+            text: "Offer a comforting gesture",
+            result: "You kneel down to the boy's level and make a sympathetic face, placing your hand over your heart. He watches you curiously through his tears, momentarily distracted from his sadness. 'Are you saying it'll be okay?' he asks between sniffles.",
+            thought: "Connection doesn't always need words.",
+            happinessChange: 1
+        },
+        {
+            text: "Rest",
+            result: "You feel tired. You close your eyes, and feel like you're about to enter a dream, but then you snap back to reality.",
+            thought: "The sound of his crying lingers in my mind...",
+            happinessChange: 0
         }
-        
-        update(deltaTime) {
-            // Move towards the field
-            this.x += this.directionX * bugSpeed * deltaTime;
-            this.y += this.directionY * bugSpeed * deltaTime;
+    ],
+    // Merchant actions
+    [
+        {
+            text: "Help lift the awning",
+            result: "You step forward and help the merchant lift the fallen awning. Together, you secure it back into place. The colorful fabrics and wares are once again protected from the harsh sun. 'Perfect timing, friend!' the merchant exclaims. 'Couldn't have done it so quickly alone.'",
+            thought: "Teamwork makes difficult tasks manageable.",
+            happinessChange: 2
+        },
+        {
+            text: "Offer him your water skin",
+            result: "You offer your water skin to the merchant. He looks surprised, then grateful as he takes a long drink. 'Most appreciated,' he says, wiping his brow. 'The sun's been merciless today.' He returns to struggling with the awning, but with renewed energy.",
+            thought: "Sometimes the simplest aid is what's needed most.",
+            happinessChange: 1
+        },
+        {
+            text: "Offer to stand and block the sun",
+            result: "You position yourself to cast a shadow over the merchant's more delicate wares. He notices your silent assistance and chuckles. 'Well, that's one way to help! Creative, I'll give you that.' You stand there awkwardly but proudly as he works on fixing the awning.",
+            thought: "Improvised solutions can be strangely satisfying.",
+            happinessChange: 1
+        },
+        {
+            text: "Rest",
+            result: "You feel tired. You close your eyes, and feel like you're about to enter a dream, but then you snap back to reality.",
+            thought: "I wonder if he managed to fix it himself...",
+            happinessChange: 0
         }
-        
-        draw(ctx) {
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = this.color;
-            ctx.fill();
-            ctx.closePath();
-        }
-        
-        collidesWith(x, y, width, height) {
-            // Check if bug touches the rectangle (field)
-            const closestX = Math.max(x - width/2, Math.min(this.x, x + width/2));
-            const closestY = Math.max(y - height/2, Math.min(this.y, y + height/2));
-            
-            const distanceX = this.x - closestX;
-            const distanceY = this.y - closestY;
-            
-            return (distanceX * distanceX + distanceY * distanceY) <= (this.radius * this.radius);
-        }
-        
-        isInElephantRange(elephantX, elephantY, elephantRadius) {
-            // Check if bug is within the elephant's range
-            const dx = this.x - elephantX;
-            const dy = this.y - elephantY;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            return distance <= elephantRadius + this.radius;
-        }
-    }
+    ]
+];
 
-    // Draw game elements
-    function draw() {
-        // Clear canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Draw field (yellow rectangle)
-        ctx.fillStyle = '#FFD700'; // Yellow
-        ctx.fillRect(fieldX - fieldWidth/2, fieldY - fieldHeight/2, fieldWidth, fieldHeight);
-        
-        // Draw elephant (purple circle)
-        ctx.beginPath();
-        ctx.arc(elephantX, elephantY, elephantRadius, 0, Math.PI * 2);
-        ctx.fillStyle = '#8A2BE2'; // Purple
-        ctx.fill();
-        ctx.closePath();
-        
-        // Draw bugs
-        bugs.forEach(bug => bug.draw(ctx));
-    }
+// Followup text for NPCs who have already been helped
+const followupText = [
+    // Old Woman followup
+    [
+        "The old woman now stands more comfortably, her basket problem resolved. She smiles warmly when she sees you looking her way.",
+        "The old woman waves cheerfully at you. 'Thank you again, dear. My daughter will be so pleased with these apples.'",
+        "The old woman is now sitting on a nearby bench, arranging her apples with care. She looks content."
+    ],
+    // Young Boy followup
+    [
+        "The boy is still on the bench, but his crying has subsided. He fiddles with his toy, trying to make it work.",
+        "The boy is now playing quietly with his partially fixed toy. He gives you a small, grateful smile.",
+        "The boy runs past you, pushing his repaired toy cart with delight, making 'whoosh' sounds as he goes."
+    ],
+    // Merchant followup
+    [
+        "The merchant continues adjusting his awning, making progress but still struggling with the final corner.",
+        "The merchant's stall is now properly shaded. He arranges his wares with renewed enthusiasm.",
+        "The merchant's stall is bustling with customers now that it's properly set up. He gives you a thankful nod as he conducts his business."
+    ]
+];
 
-    // Update game state
-    function update(timestamp) {
-        if (!gameRunning) return;
-        
-        // Calculate delta time in seconds
-        const deltaTime = (timestamp - gameTime) / 1000;
-        gameTime = timestamp;
-        
-        // Increase difficulty every 5 seconds
-        if (timestamp - lastDifficultyIncrease >= 5000) {
-            bugSpawnRate *= 1.5; // Increase spawn rate by 50%
-            bugSpeed *= 1.1; // Increase speed by 10%
-            lastDifficultyIncrease = timestamp;
-        }
-        
-        // Spawn new bugs
-        if (timestamp - lastBugSpawn >= 1000 / bugSpawnRate) {
-            bugs.push(new Bug());
-            lastBugSpawn = timestamp;
-        }
-        
-        // Update bugs
-        bugs.forEach(bug => bug.update(deltaTime));
-        
-        // Check for bugs reaching the field
-        for (let i = 0; i < bugs.length; i++) {
-            if (bugs[i].collidesWith(fieldX, fieldY, fieldWidth, fieldHeight)) {
-                gameOver();
-                return;
-            }
-            
-            // Remove bugs caught by Percy
-            if (bugs[i].isInElephantRange(elephantX, elephantY, elephantRadius)) {
-                bugs.splice(i, 1);
-                i--;
-            }
-        }
-        
-        // Don't add event listeners in update loop
-        
-        // Draw the game
-        draw();
-        
-        // Continue game loop
-        requestAnimationFrame(update);
-    }
-
-    // Start the game
-    function startGame() {
-        calculateGameElements();
-        gameRunning = true;
-        gameStartTime = performance.now();
-        gameTime = gameStartTime;
-        lastDifficultyIncrease = gameStartTime;
-        bugs = [];
-        bugSpawnRate = 1;
-        bugSpeed = 50;
-        lastBugSpawn = 0;
-        
-        gameOverElement.classList.add('hidden');
-        
-        requestAnimationFrame(update);
-    }
-
-    // Game over
-    function gameOver() {
-        gameRunning = false;
-        const finalTime = (gameTime - gameStartTime) / 1000;
-        gameOverMessage.textContent = `Percy the elephant failed to protect his daffodils from bugs. He lasted ${finalTime.toFixed(1)} seconds.`;
-        gameOverElement.classList.remove('hidden');
-    }
-
-    // Event listeners
-    restartButton.addEventListener('click', startGame);
+// Initialize the game
+function initGame() {
+    // Reset game state
+    gameState.currentNPC = 0;
+    gameState.gameOver = false;
+    gameState.npcs.forEach(npc => {
+        npc.happiness = 0;
+        npc.visited = false;
+    });
     
-    // Mouse and touch event listeners for dragging Percy
-    function handleStart(e) {
-        // Prevent default behavior for touch events
-        if (e.type === 'touchstart') {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const rect = canvas.getBoundingClientRect();
-            const touchX = touch.clientX - rect.left;
-            const touchY = touch.clientY - rect.top;
-            
-            // Check if touch is on the elephant
-            const dx = touchX - elephantX;
-            const dy = touchY - elephantY;
-            if (Math.sqrt(dx * dx + dy * dy) <= elephantRadius * 2) {
-                isDragging = true;
-            }
-        } else {
-            isDragging = true;
-        }
+    // Hide restart button
+    restartButton.style.display = "none";
+    
+    // Show introduction
+    displayIntroduction();
+}
+
+// Display introduction
+function displayIntroduction() {
+    textArea.innerHTML = `
+        <div class="narrative">
+            You arrive in a small village square as the afternoon sun casts long shadows. 
+            A gentle breeze carries the scent of baked goods and the distant sound of conversation.
+            You are a wanderer, unable to speak, but your eyes are keen to observe and your hands ready to help.
+        </div>
+        <div class="thought">I wonder what stories this place holds...</div>
+    `;
+    
+    // Set button text
+    buttons[0].textContent = "Look around the square";
+    buttons[1].disabled = true;
+    buttons[2].disabled = true;
+    buttons[3].disabled = true;
+    
+    // Add active class to first button
+    buttons[0].classList.add("active-button");
+    
+    // Add event listener for the first button only
+    buttons[0].onclick = () => {
+        displayCurrentNPC();
+    };
+}
+
+// Display current NPC
+function displayCurrentNPC() {
+    const npc = gameState.npcs[gameState.currentNPC];
+    
+    // Clear previous button event listeners
+    buttons.forEach(button => {
+        button.onclick = null;
+        button.classList.remove("active-button");
+        button.disabled = false;
+    });
+    
+    // If NPC has been visited already
+    if (npc.visited) {
+        displayFollowup();
+        return;
     }
     
-    function handleMove(e) {
-        if (!isDragging || !gameRunning) return;
-        
-        const rect = canvas.getBoundingClientRect();
-        if (e.type === 'touchmove') {
-            e.preventDefault();
-            const touch = e.touches[0];
-            elephantX = touch.clientX - rect.left;
-            elephantY = touch.clientY - rect.top;
-        } else {
-            elephantX = e.clientX - rect.left;
-            elephantY = e.clientY - rect.top;
-        }
-    }
+    // Update text area with NPC description
+    textArea.innerHTML = `
+        <div class="narrative">
+            As you walk through the village square, your attention is drawn to a figure nearby.
+        </div>
+        <div class="npc-description">
+            ${npc.description}
+        </div>
+    `;
     
-    function handleEnd() {
-        isDragging = false;
-    }
+    // Set action buttons
+    const actions = npcActions[gameState.currentNPC];
+    actions.forEach((action, index) => {
+        buttons[index].textContent = action.text;
+        buttons[index].onclick = () => handleAction(index);
+    });
     
-    // Add mouse events
-    canvas.addEventListener('mousedown', handleStart);
-    canvas.addEventListener('mousemove', handleMove);
-    canvas.addEventListener('mouseup', handleEnd);
-    canvas.addEventListener('mouseout', handleEnd);
-    
-    // Add touch events for mobile
-    canvas.addEventListener('touchstart', handleStart, { passive: false });
-    canvas.addEventListener('touchmove', handleMove, { passive: false });
-    canvas.addEventListener('touchend', handleEnd);
-    canvas.addEventListener('touchcancel', handleEnd);
+    // Mark first non-rest action button as active
+    buttons[0].classList.add("active-button");
+}
 
-    // Start game automatically when page loads
-    startGame();
-});
+// Display followup for already visited NPC
+function displayFollowup() {
+    const npc = gameState.npcs[gameState.currentNPC];
+    const followupIndex = Math.min(npc.happiness - 1, 2);
+    
+    if (followupIndex >= 0) {
+        textArea.innerHTML += `
+            <div class="narrative">
+                ${followupText[gameState.currentNPC][followupIndex]}
+            </div>
+        `;
+    } else {
+        textArea.innerHTML += `
+            <div class="narrative">
+                ${npc.description} They don't seem to have noticed your presence yet.
+            </div>
+        `;
+    }
+    
+    // Only allow "Continue" action for already visited NPCs
+    buttons[0].textContent = "Continue on your way";
+    buttons[0].classList.add("active-button");
+    buttons[0].onclick = () => moveToNextNPC();
+    
+    buttons[1].disabled = true;
+    buttons[2].disabled = true;
+    buttons[3].disabled = true;
+}
+
+// Handle action button clicks
+function handleAction(buttonIndex) {
+    const npc = gameState.npcs[gameState.currentNPC];
+    const action = npcActions[gameState.currentNPC][buttonIndex];
+    
+    // Process the action
+    let result, thought, happinessChange;
+    
+    // Check if the action has a function for dynamic results
+    if (typeof action.result === 'function') {
+        const outcome = action.result();
+        result = outcome.result;
+        thought = outcome.thought;
+        happinessChange = outcome.happinessChange;
+    } else {
+        result = action.result;
+        thought = action.thought;
+        happinessChange = action.happinessChange;
+    }
+    
+    // Update NPC happiness
+    npc.happiness += happinessChange;
+    // Cap happiness at 3
+    npc.happiness = Math.min(npc.happiness, 3);
+    // Mark NPC as visited
+    npc.visited = true;
+    
+    // Display action result
+    textArea.innerHTML += `
+        <div class="result">
+            ${result}
+        </div>
+        <div class="thought">
+            ${thought}
+        </div>
+    `;
+    
+    // Auto-scroll to bottom of text area
+    textArea.scrollTop = textArea.scrollHeight;
+    
+    // Clear button event listeners
+    buttons.forEach(button => {
+        button.onclick = null;
+        button.disabled = true;
+        button.classList.remove("active-button");
+    });
+    
+    // Set Continue button
+    buttons[0].textContent = "Continue on your way";
+    buttons[0].disabled = false;
+    buttons[0].classList.add("active-button");
+    buttons[0].onclick = () => moveToNextNPC();
+}
+
+// Move to next NPC
+function moveToNextNPC() {
+    gameState.currentNPC = (gameState.currentNPC + 1) % gameState.npcs.length;
+    
+    // Check if we've completed a full cycle
+    const allVisited = gameState.npcs.every(npc => npc.visited);
+    
+    if (allVisited) {
+        endGame();
+    } else {
+        displayCurrentNPC();
+    }
+}
+
+// End the game
+function endGame() {
+    gameState.gameOver = true;
+    
+    // Calculate total happiness
+    const totalHappiness = gameState.npcs.reduce((sum, npc) => sum + npc.happiness, 0);
+    
+    // Determine ending text
+    let endingText;
+    if (totalHappiness >= 7) {
+        endingText = "The village square feels brighter. The old woman smiles, the boy plays happily, and the merchant's business thrives. You feel a sense of quiet satisfaction.";
+    } else if (totalHappiness >= 4) {
+        endingText = "The village square is a little better than you found it. Some problems remain, but you've made a difference.";
+    } else {
+        endingText = "The village square remains a place of struggle. You wonder if you could have done more.";
+    }
+    
+    // Display ending
+    textArea.innerHTML = `
+        <div class="narrative">
+            As the sun begins to set, you take one last look at the village square.
+        </div>
+        <div class="narrative">
+            ${endingText}
+        </div>
+        <div class="narrative">
+            Without a word—as always—you turn and continue on your journey. 
+            Perhaps another village awaits your silent help tomorrow.
+        </div>
+        <div class="thought">
+            The greatest reward is knowing I made a difference, however small.
+        </div>
+    `;
+    
+    // Disable all action buttons
+    buttons.forEach(button => {
+        button.disabled = true;
+        button.classList.remove("active-button");
+        button.onclick = null;
+    });
+    
+    // Show restart button
+    restartButton.style.display = "block";
+    restartButton.onclick = initGame;
+}
+
+// Start the game
+initGame();

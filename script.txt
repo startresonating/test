@@ -1,631 +1,278 @@
-// Game state
-const gameState = {
-    currentNPC: 0,
-    npcs: [
-        { name: "Old Woman", description: "An old woman struggles to carry a heavy basket of apples.", happiness: 0, visited: false },
-        { name: "Young Boy", description: "A young boy sits on a bench, crying, holding a broken toy cart.", happiness: 0, visited: false },
-        { name: "Merchant", description: "A merchant's stall awning has collapsed, exposing his wares to the harsh sun.", happiness: 0, visited: false }
-    ],
-    playerTraits: {
-        patience: Math.random() > 0.5, // Random personality traits that affect some outcomes
-        strength: Math.random() > 0.5,
-        creativity: Math.random() > 0.5,
-        empathy: Math.random() > 0.5
-    },
-    timeOfDay: ["morning", "afternoon", "evening"][Math.floor(Math.random() * 3)], // Random time of day
-    weather: ["clear", "cloudy", "windy", "light rain"][Math.floor(Math.random() * 4)], // Random weather
-    gameOver: false,
-    // Track what items the player has collected or used during the game
-    inventory: {
-        hasApple: false,
-        hasTool: Math.random() > 0.7, // 30% chance to start with a tool
-        hasWaterSkin: true,
-        hasHandkerchief: Math.random() > 0.5
-    }
-};
-
-// DOM elements
-const textArea = document.getElementById("text-area");
-const buttons = [
-    document.getElementById("button1"),
-    document.getElementById("button2"),
-    document.getElementById("button3"),
-    document.getElementById("button4")
-];
-const restartButton = document.getElementById("restart-button");
-
-// Possible internal thoughts for different situations
-const randomThoughts = {
-    positive: [
-        "It feels good to help others.",
-        "A small kindness can brighten someone's day.",
-        "This reminds me of something my grandmother taught me.",
-        "Connection doesn't always need words.",
-        "The simplest gestures often mean the most.",
-        "I'm glad I stopped in this village today."
-    ],
-    neutral: [
-        "I wonder what else I might discover here.",
-        "The village seems like it has many stories to tell.",
-        "I should continue exploring after this.",
-        "Time passes differently when helping others.",
-        "People are often surprised by silent assistance.",
-        "Everyone has their burdens to carry."
-    ],
-    negative: [
-        "Maybe I should have done more...",
-        "Was that really the best I could offer?",
-        "I hope they don't think I'm strange.",
-        "Being unable to speak makes some things harder.",
-        "Sometimes I wish I could explain myself better.",
-        "Will my help make any lasting difference?"
-    ]
-};
-
-// Get a random thought based on outcome type
-function getRandomThought(type) {
-    const thoughts = randomThoughts[type];
-    return thoughts[Math.floor(Math.random() * thoughts.length)];
-}
-
-// Action sets for each NPC - expanded to always have 4 options
-const npcActions = [
-    // Old Woman actions - expanded to 4 options
-    [
-        {
-            text: "Offer to carry the basket",
-            result: function() {
-                // Different outcomes based on strength trait
-                if (gameState.playerTraits.strength) {
-                    return {
-                        result: "You gently take the basket from the old woman's hands. Despite its weight, you hold it steady with ease. 'Oh my, such strength!' she says with relief. 'These old bones aren't what they used to be. Would you mind helping me take these to my stall?' You nod and follow her direction, carefully placing the basket where she indicates.",
-                        thought: getRandomThought("positive"),
-                        happinessChange: 3
-                    };
-                } else {
-                    return {
-                        result: "You take the basket from the old woman's hands. The weight catches you by surprise, and you struggle a bit but manage not to drop anything. 'Thank you, dear,' she says. 'Even sharing the burden helps these old bones.' Together, you manage to move the basket to a nearby bench.",
-                        thought: getRandomThought("positive"),
-                        happinessChange: 2
-                    };
-                }
-            }
-        },
-        {
-            text: "Smile encouragingly",
-            result: function() {
-                // Different outcomes based on empathy trait
-                if (gameState.playerTraits.empathy) {
-                    return {
-                        result: "You offer a warm, empathetic smile to the old woman. Your genuine concern seems to touch her. She returns the smile, visibly brightening. 'You have kind eyes, stranger. Would you mind just walking alongside me for a moment?' You accompany her to a shaded bench, where she can rest her basket.",
-                        thought: getRandomThought("positive"),
-                        happinessChange: 2
-                    };
-                } else {
-                    return {
-                        result: "You smile encouragingly at the old woman. She nods in acknowledgment. 'It's nice to be seen,' she says quietly, adjusting her grip on the basket. The recognition seems to give her a small boost of energy.",
-                        thought: getRandomThought("neutral"),
-                        happinessChange: 1
-                    };
-                }
-            }
-        },
-        {
-            text: "Offer a reassuring nod",
-            result: function() {
-                // Different outcomes based on time of day
-                if (gameState.timeOfDay === "morning") {
-                    return {
-                        result: "You nod reassuringly at the old woman, catching her eye in the fresh morning light. She stands a little straighter. 'Starting the day with kindness, I see. Bless you.' She seems heartened that someone has noticed her struggle so early in the day.",
-                        thought: getRandomThought("positive"),
-                        happinessChange: 1
-                    };
-                } else {
-                    return {
-                        result: "You nod reassuringly at the old woman. She seems to stand a little straighter, finding some strength in your silent encouragement. The basket still weighs heavily in her arms, but her determination grows. 'Thank you for the acknowledgment, at least,' she says.",
-                        thought: getRandomThought("neutral"),
-                        happinessChange: 1
-                    };
-                }
-            }
-        },
-        {
-            text: "Examine the apples",
-            result: function() {
-                // Give the player an apple sometimes
-                const getApple = Math.random() > 0.6;
-                if (getApple) {
-                    gameState.inventory.hasApple = true;
-                    return {
-                        result: "You gesture toward the apples, raising your eyebrows in appreciation. The old woman smiles. 'Ah, you have an eye for quality! These are from my orchard.' She sees your admiration and selects a particularly red one, offering it to you. 'Here, a gift.' You accept it gratefully and tuck it away for later.",
-                        thought: "An unexpected gift. Perhaps it will be useful later.",
-                        happinessChange: 1
-                    };
-                } else {
-                    return {
-                        result: "You gesture toward the apples with interest. The old woman follows your gaze. 'Beautiful, aren't they? From my own trees. I'm taking them to my grandson's stall.' She seems pleased by your interest, which momentarily distracts her from the basket's weight.",
-                        thought: getRandomThought("neutral"),
-                        happinessChange: 1
-                    };
-                }
+document.addEventListener('DOMContentLoaded', () => {
+    const game = document.getElementById('game');
+    const spaceship = document.getElementById('spaceship');
+    const scoreDisplay = document.getElementById('score');
+    const startScreen = document.getElementById('start-screen');
+    const gameOverScreen = document.getElementById('game-over-screen');
+    const finalScoreDisplay = document.getElementById('final-score');
+    
+    // Game variables
+    let gameRunning = false;
+    let score = 0;
+    let spaceshipPosition = 50;
+    let spaceshipVelocity = 0;
+    let gravity = 0.5;
+    let lasers = [];
+    let lastLaserTime = 0;
+    let gameSpeed = 2;
+    let laserInterval = 1650; // Initial laser interval (10% more than original)
+    let gwionMessageActive = false;
+    
+    // Gwion update - random messages
+    const gwionMessages = [
+        "GET IN THERE GWION!",
+        "HELL YEAH GWION!",
+        "HANG LOOSE HANG LOOSE",
+        "LET'S GOOOO!",
+        "GWION ON FIRE!",
+        "SMASHING IT GWION!",
+        "ABSOLUTELY CRUSHING IT!",
+        "GWION = GOAT!",
+        "SICK MOVES GWION!",
+        "UNSTOPPABLE GWION!",
+        "LEGENDARY GWION!",
+        "GWION TAKING FLIGHT!",
+        "HORNY!",
+        "SO HORNY",
+        "TITTY ASS!"
+    ];
+    
+    // Game constants
+    const JUMP_STRENGTH = -8;
+    const GAME_WIDTH = game.clientWidth;
+    const GAME_HEIGHT = game.clientHeight;
+    const SPACESHIP_WIDTH = 50; // Circular boob width
+    const SPACESHIP_HEIGHT = 50; // Circular boob height
+    const LASER_WIDTH = 40;
+    const GAP_SIZE = 172.5; // 15% larger than original (fixed, doesn't change)
+    
+    // Initial spaceship position
+    spaceship.style.left = '100px';
+    spaceship.style.top = spaceshipPosition + 'px';
+    
+    // Input handlers
+    document.addEventListener('keydown', handleInput);
+    game.addEventListener('click', handleInput);
+    game.addEventListener('touchstart', handleInput);
+    
+    function handleInput(e) {
+        if (e.code === 'Space' || e.type === 'click' || e.type === 'touchstart') {
+            e.preventDefault();
+            
+            if (!gameRunning) {
+                startGame();
+            } else {
+                // Make spaceship jump
+                spaceshipVelocity = JUMP_STRENGTH;
+                // Rotate spaceship slightly up
+                spaceship.style.transform = 'rotate(-20deg)';
             }
         }
-    ],
-    // Young Boy actions - expanded to 4 options
-    [
-        {
-            text: "Try to fix the toy",
-            result: function() {
-                // Different outcomes based on creativity and whether player has a tool
-                if (gameState.inventory.hasTool) {
-                    return {
-                        result: "You kneel beside the boy and pull out a small multi-tool from your pocket. His eyes widen with interest. With careful precision, you reattach the wheel and tighten the loose parts. 'Wow!' the boy exclaims as you hand back his fully repaired cart. 'It's even better than before!'",
-                        thought: "The right tool makes all the difference.",
-                        happinessChange: 3
-                    };
-                } else if (gameState.playerTraits.creativity) {
-                    // Random success or partial success
-                    const randomOutcome = Math.random();
-                    if (randomOutcome > 0.6) {
-                        return {
-                            result: "You examine the broken toy cart with a creative eye. Using a bent twig as a makeshift axle and a bit of string from your pocket, you manage an ingenious repair. The boy watches in amazement. 'That's magic!' he exclaims when you hand it back, his tears forgotten as he tests the wheels.",
-                            thought: getRandomThought("positive"),
-                            happinessChange: 3
-                        };
-                    } else {
-                        return {
-                            result: "You try an inventive approach to fixing the cart, using what materials you can find nearby. The repair isn't perfect, but it's functional. The boy's sobs quiet as he watches your efforts. 'It's... better,' he says cautiously, giving it a gentle test roll.",
-                            thought: getRandomThought("neutral"),
-                            happinessChange: 2
-                        };
+    }
+    
+    function startGame() {
+        // Reset game state
+        gameRunning = true;
+        score = 0;
+        spaceshipPosition = GAME_HEIGHT / 3;
+        spaceshipVelocity = 0;
+        gravity = 0.5;
+        lasers = [];
+        lastLaserTime = Date.now();
+        gameSpeed = 2;
+        laserInterval = 1650;
+        
+        // Update UI
+        scoreDisplay.textContent = score;
+        startScreen.classList.add('hidden');
+        gameOverScreen.classList.add('hidden');
+        
+        // Start game loop
+        requestAnimationFrame(gameLoop);
+    }
+    
+    function gameLoop(timestamp) {
+        if (!gameRunning) return;
+        
+        // Update spaceship position
+        spaceshipVelocity += gravity;
+        spaceshipPosition += spaceshipVelocity;
+        
+        // Gradually return spaceship rotation to normal
+        if (spaceshipVelocity > 0) {
+            spaceship.style.transform = 'rotate(15deg)';
+        }
+        
+        // Check for collisions with boundaries
+        if (spaceshipPosition < 0) {
+            spaceshipPosition = 0;
+            spaceshipVelocity = 0;
+        } else if (spaceshipPosition > GAME_HEIGHT - SPACESHIP_HEIGHT) {
+            gameOver();
+            return;
+        }
+        
+        // Update spaceship position
+        spaceship.style.top = spaceshipPosition + 'px';
+        
+        // Spawn new lasers based on current laser interval
+        if (Date.now() - lastLaserTime > laserInterval) {
+            spawnLaser();
+            lastLaserTime = Date.now();
+        }
+        
+        // Move and check lasers
+        updateLasers();
+        
+        // Continue game loop
+        requestAnimationFrame(gameLoop);
+    }
+    
+    function spawnLaser() {
+        // Create laser element
+        const laser = document.createElement('div');
+        laser.className = 'laser';
+        
+        // Randomize gap position
+        const gapStart = Math.random() * (GAME_HEIGHT - GAP_SIZE);
+        
+        // Create top laser beam
+        const topBeam = document.createElement('div');
+        topBeam.className = 'laser-beam';
+        topBeam.style.top = '0';
+        topBeam.style.height = gapStart + 'px';
+        
+        // Create bottom laser beam
+        const bottomBeam = document.createElement('div');
+        bottomBeam.className = 'laser-beam';
+        bottomBeam.style.top = (gapStart + GAP_SIZE) + 'px';
+        bottomBeam.style.height = (GAME_HEIGHT - gapStart - GAP_SIZE) + 'px';
+        
+        // Add beams to laser
+        laser.appendChild(topBeam);
+        laser.appendChild(bottomBeam);
+        
+        // Add laser to game
+        game.appendChild(laser);
+        
+        // Add laser to array with tracking info
+        lasers.push({
+            element: laser,
+            passed: false,
+            x: GAME_WIDTH
+        });
+    }
+    
+    function updateLasers() {
+        // Update each laser
+        for (let i = lasers.length - 1; i >= 0; i--) {
+            const laser = lasers[i];
+            
+            // Move laser
+            laser.x -= gameSpeed;
+            laser.element.style.right = (GAME_WIDTH - laser.x) + 'px';
+            
+            // Check if spaceship passed laser
+            if (!laser.passed && laser.x < 100) {
+                laser.passed = true;
+                score++;
+                scoreDisplay.textContent = score;
+                
+                // Every 3 lasers
+                if (score % 3 === 0) {
+                    // Increase game speed by 5%
+                    gameSpeed *= 1.05;
+                    
+                    // Increase gravity by 5% (makes the boob fall faster)
+                    gravity *= 1.05;
+                    
+                    // Decrease laser interval by 5% (lasers come more frequently)
+                    laserInterval *= 0.95;
+                    
+                    // Show message if not already showing one
+                    if (!gwionMessageActive) {
+                        showGwionMessage();
                     }
-                } else {
-                    return {
-                        result: "You examine the broken toy cart. The damage is worse than it looked—the axle is bent and a wheel is cracked. You make some adjustments that improve it slightly, but it's still not fully fixed. The boy appreciates your effort though, his sobs quieting to sniffles. 'Thanks for trying,' he says softly.",
-                        thought: getRandomThought("neutral"),
-                        happinessChange: 1
-                    };
                 }
             }
-        },
-        {
-            text: "Pat him on the shoulder",
-            result: function() {
-                if (gameState.playerTraits.empathy) {
-                    return {
-                        result: "You gently pat the boy's shoulder with natural empathy. He looks up, startled at first, then relieved by the kindness in your eyes. His tears slow as he feels a moment of genuine connection. 'Are you going to stay in the village?' he asks hopefully, his broken toy temporarily forgotten.",
-                        thought: getRandomThought("positive"),
-                        happinessChange: 2
-                    };
-                } else {
-                    return {
-                        result: "You pat the boy's shoulder awkwardly. He looks up at you, tears still streaming down his face, but there's a moment of connection. His crying softens slightly, finding some comfort in your presence.",
-                        thought: getRandomThought("neutral"),
-                        happinessChange: 1
-                    };
-                }
+            
+            // Check for collision
+            if (checkCollision(laser)) {
+                gameOver();
+                return;
             }
-        },
-        {
-            text: "Offer a comforting gesture",
-            result: function() {
-                if (gameState.inventory.hasHandkerchief) {
-                    return {
-                        result: "You kneel down to the boy's level and gently offer your handkerchief for his tears. He takes it hesitantly, wiping his face. 'Thank you,' he says, his breathing calming. 'My pa says big boys don't cry, but it's my favorite toy.' You shake your head and mime that it's okay to be sad sometimes. He manages a small smile.",
-                        thought: "Children's emotions deserve respect too.",
-                        happinessChange: 2
-                    };
-                } else {
-                    return {
-                        result: "You kneel down to the boy's level and make a sympathetic face, placing your hand over your heart. He watches you curiously through his tears, momentarily distracted from his sadness. 'Are you saying it'll be okay?' he asks between sniffles. You nod gently.",
-                        thought: getRandomThought("neutral"),
-                        happinessChange: 1
-                    };
-                }
-            }
-        },
-        {
-            text: "Distract with a game",
-            result: function() {
-                // Different outcomes based on weather and creativity
-                if (gameState.weather === "light rain") {
-                    return {
-                        result: "Despite the light rain, you mime hopping across puddles. The boy watches curiously, his crying subsiding. 'What are you doing?' he asks. You gesture for him to join you. After hesitation, he leaves his broken toy on the bench and hops alongside you, giggling as tiny splashes mark each jump. His sadness momentarily forgotten.",
-                        thought: "Play can be the best medicine for sadness.",
-                        happinessChange: 2
-                    };
-                } else if (gameState.playerTraits.creativity) {
-                    return {
-                        result: "You make a shadow puppet on the ground, creating a little rabbit that hops and wiggles its ears. The boy's crying stops as curiosity takes over. 'Do another one!' he requests, watching intently as you create more animals. Soon he's trying to copy you, his broken toy temporarily forgotten as he laughs at his own shadow creations.",
-                        thought: getRandomThought("positive"),
-                        happinessChange: 2
-                    };
-                } else {
-                    return {
-                        result: "You try to initiate a simple game of peekaboo, covering your face and then peeking out. The boy looks confused at first, then gives a reluctant smile. 'I'm too old for that,' he says, but his tears have slowed. 'But... thank you for trying to make me feel better.'",
-                        thought: getRandomThought("neutral"),
-                        happinessChange: 1
-                    };
-                }
+            
+            // Remove lasers that are off-screen
+            if (laser.x < -LASER_WIDTH) {
+                game.removeChild(laser.element);
+                lasers.splice(i, 1);
             }
         }
-    ],
-    // Merchant actions - expanded to 4 options
-    [
-        {
-            text: "Help lift the awning",
-            result: function() {
-                if (gameState.playerTraits.strength) {
-                    return {
-                        result: "With impressive strength, you lift and secure the heavy awning in one smooth motion. 'By the stars!' the merchant exclaims, clearly impressed. 'That would have taken me an hour!' He straightens his wares with new energy. 'You've saved my day's business. Please, take this as thanks.' He presses a small tool into your hand.",
-                        thought: "Strength well-applied brings unexpected rewards.",
-                        happinessChange: 3,
-                        getItem: function() { gameState.inventory.hasTool = true; }
-                    };
-                } else {
-                    return {
-                        result: "You step forward and help the merchant lift the fallen awning. Together, through some effort, you secure it back into place. The colorful fabrics and wares are once again protected from the harsh sun. 'Perfect timing, friend!' the merchant exclaims. 'Couldn't have done it so quickly alone.'",
-                        thought: getRandomThought("positive"),
-                        happinessChange: 2
-                    };
-                }
-            }
-        },
-        {
-            text: "Offer him your water skin",
-            result: function() {
-                if (gameState.weather === "clear" && gameState.timeOfDay === "afternoon") {
-                    return {
-                        result: "In the heat of the clear afternoon, your offer of water is perfectly timed. The merchant drinks gratefully, color returning to his face. 'You've no idea how badly I needed that,' he says, wiping his brow. 'Been working since dawn with no break.' Refreshed, he tackles the awning with renewed vigor, making quick progress.",
-                        thought: "Sometimes the simplest aid is exactly what's needed most.",
-                        happinessChange: 2
-                    };
-                } else {
-                    return {
-                        result: "You offer your water skin to the merchant. He looks surprised, then grateful as he takes a drink. 'Most appreciated,' he says, wiping his mouth. 'The work's been thirsty.' He returns to struggling with the awning, but with a bit more energy than before.",
-                        thought: getRandomThought("neutral"),
-                        happinessChange: 1
-                    };
-                }
-            }
-        },
-        {
-            text: "Offer to stand and block the sun",
-            result: function() {
-                // Different outcomes based on time of day
-                if (gameState.timeOfDay === "evening") {
-                    return {
-                        result: "You move to block the setting sun, but in the evening light, your shadow stretches far away from the stall. The merchant chuckles. 'Thoughtful, but the sun's angle is working against you!' Your gesture still brings a smile to his face as he continues working on the awning.",
-                        thought: "Even impractical help can lighten the mood.",
-                        happinessChange: 1
-                    };
-                } else if (gameState.playerTraits.patience) {
-                    return {
-                        result: "You position yourself perfectly to cast a shadow over the merchant's most delicate wares. With patience, you adjust your position as the sun moves. The merchant is deeply impressed by your dedication. 'I've never seen such thoughtfulness from a stranger,' he says, working faster with his goods protected.",
-                        thought: "Patience transforms a small gesture into meaningful aid.",
-                        happinessChange: 2
-                    };
-                } else {
-                    return {
-                        result: "You position yourself to cast a shadow over the merchant's more delicate wares. He notices your silent assistance and chuckles. 'Well, that's one way to help! Creative, I'll give you that.' You stand there awkwardly but proudly as he works on fixing the awning.",
-                        thought: getRandomThought("neutral"),
-                        happinessChange: 1
-                    };
-                }
-            }
-        },
-        {
-            text: "Gather fallen merchandise",
-            result: function() {
-                // Different outcomes based on whether player has an apple
-                if (gameState.inventory.hasApple) {
-                    return {
-                        result: "As you carefully collect scattered items, the merchant notices the apple in your pocket. 'Ah, one of Matilda's famous apples! She's quite particular about who gets those.' He seems to regard you with new respect as you help reorganize his wares. 'Any friend of hers is welcome at my stall anytime.'",
-                        thought: "Small connections reveal the village's hidden relationships.",
-                        happinessChange: 2
-                    };
-                } else {
-                    return {
-                        result: "You begin gathering the various items that have fallen from the merchant's stall. With careful hands, you sort and arrange them neatly. 'Careful with that blue vase!' he calls out, then relaxes as he sees your gentle handling. 'You have good hands. Appreciate the help while I fix this stubborn awning.'",
-                        thought: getRandomThought("positive"),
-                        happinessChange: 2
-                    };
-                }
+    }
+    
+    function checkCollision(laser) {
+        // Circle collision detection for the boob
+        const circleRadius = SPACESHIP_WIDTH / 2 * 0.7; // 30% reduced hitbox for the circle
+        const circleCenterX = 100 + SPACESHIP_WIDTH / 2;
+        const circleCenterY = spaceshipPosition + SPACESHIP_HEIGHT / 2;
+        
+        // Check if spaceship is within laser x-range
+        if (laser.x <= circleCenterX + circleRadius && laser.x + LASER_WIDTH >= circleCenterX - circleRadius) {
+            // Get laser gap position
+            const laserBeams = laser.element.querySelectorAll('.laser-beam');
+            const gapStart = parseFloat(laserBeams[0].style.height);
+            const gapEnd = parseFloat(laserBeams[1].style.top);
+            
+            // Check if spaceship circle intersects with laser beams
+            if (circleCenterY - circleRadius < gapStart || circleCenterY + circleRadius > gapEnd) {
+                return true; // Collision detected
             }
         }
-    ]
-];
-
-// Followup text for NPCs who have already been helped - expanded for more variety
-const followupText = [
-    // Old Woman followup - multiple variations based on happiness level
-    [
-        "The old woman now stands more comfortably, her basket problem partially resolved. She nods politely when she notices you looking her way again.",
-        "The old woman waves cheerfully at you. 'Thank you again, dear. My daughter will be so pleased with these apples. They're for her pie stall, you know.'",
-        "The old woman is now sitting on a nearby bench, arranging her apples with care. When she spots you, she calls out, 'Come, come! I saved the best apple for you!' Her entire demeanor radiates joy and gratitude."
-    ],
-    // Young Boy followup - multiple variations based on happiness level
-    [
-        "The boy is still on the bench, but his crying has subsided to occasional sniffles. He fiddles half-heartedly with his toy, trying to make it work.",
-        "The boy is now playing quietly with his partially fixed toy. He gives you a small, grateful smile when he notices you. 'It rolls a little better now,' he says softly.",
-        "The boy races past you, pushing his repaired toy cart with delight, making 'whoosh' sounds. He circles back just to show you how well it works. 'Look! It's faster than ever!' His previous tears completely forgotten in the joy of play."
-    ],
-    // Merchant followup - multiple variations based on happiness level
-    [
-        "The merchant continues adjusting his awning, making slow progress but still struggling with the final corner. He gives you a acknowledging nod as you pass by.",
-        "The merchant's stall is now properly shaded. He arranges his wares with renewed enthusiasm, humming a tune as he works. 'Business is looking up!' he calls when he spots you.",
-        "The merchant's stall is bustling with customers now that it's properly set up. He spots you in the crowd and waves you over, pressing a small trinket into your hand. 'For my silent savior,' he says with a wink, before returning to his thriving business."
-    ]
-];
-
-// Alternative followup text based on time of day - add variety on revisits
-const timeBasedFollowup = {
-    morning: [
-        "The rising sun casts long shadows across the square as you encounter them again.",
-        "The morning air is still crisp as you cross paths once more.",
-        "Early village life bustles around you as you meet again."
-    ],
-    afternoon: [
-        "The warmth of the day is at its peak as your paths cross again.",
-        "The busy afternoon atmosphere surrounds you both.",
-        "Shadows grow shorter as the day progresses and you meet again."
-    ],
-    evening: [
-        "Golden light bathes the village as the day winds down and you encounter them once more.",
-        "The gentle evening breeze carries the scent of cooking meals as you cross paths again.",
-        "The setting sun creates a warm glow as your paths intersect once more."
-    ]
-};
-
-// Weather based descriptions - add variety on revisits
-const weatherBasedFollowup = {
-    clear: [
-        "Under clear skies, the village seems more vibrant than before.",
-        "Sunlight brightens the scene as you return.",
-        "The clarity of the day makes everything more vivid this time."
-    ],
-    cloudy: [
-        "Gray clouds overhead cast subtle shadows as you return.",
-        "The diffused light of the cloudy day softens the village's edges.",
-        "A blanket of clouds hangs low, giving the village a cozy feeling."
-    ],
-    windy: [
-        "The breeze rustles through the square as you encounter them again.",
-        "Wind carries distant conversations to your ears as you return.",
-        "Your clothes flutter slightly in the persistent breeze of the day."
-    ],
-    "light rain": [
-        "A gentle drizzle creates a peaceful atmosphere as you meet again.",
-        "Small puddles reflect the village as you return during the light rain.",
-        "The soft patter of raindrops creates a soothing backdrop to your return."
-    ]
-};
-
-// Initialize the game
-function initGame() {
-    // Reset game state but randomize traits and conditions for replayability
-    gameState.currentNPC = 0;
-    gameState.gameOver = false;
-    gameState.npcs.forEach(npc => {
-        npc.happiness = 0;
-        npc.visited = false;
-    });
-    
-    // Randomize player traits for each playthrough
-    gameState.playerTraits = {
-        patience: Math.random() > 0.5,
-        strength: Math.random() > 0.5,
-        creativity: Math.random() > 0.5,
-        empathy: Math.random() > 0.5
-    };
-    
-    // Randomize time and weather
-    gameState.timeOfDay = ["morning", "afternoon", "evening"][Math.floor(Math.random() * 3)];
-    gameState.weather = ["clear", "cloudy", "windy", "light rain"][Math.floor(Math.random() * 4)];
-    
-    // Randomize inventory
-    gameState.inventory = {
-        hasApple: false,
-        hasTool: Math.random() > 0.7, // 30% chance to start with a tool
-        hasWaterSkin: true,
-        hasHandkerchief: Math.random() > 0.5
-    };
-    
-    // Hide restart button
-    restartButton.style.display = "none";
-    
-    // Show introduction
-    displayIntroduction();
-}
-
-// Display introduction
-function displayIntroduction() {
-    // Create an introduction based on random time of day and weather
-    let timeDesc, weatherDesc;
-    
-    switch(gameState.timeOfDay) {
-        case "morning":
-            timeDesc = "The morning sun rises over the hills, casting long shadows across";
-            break;
-        case "afternoon":
-            timeDesc = "The afternoon sun hangs high overhead, bathing";
-            break;
-        case "evening":
-            timeDesc = "The setting sun paints golden hues across";
-            break;
+        
+        return false;
     }
     
-    switch(gameState.weather) {
-        case "clear":
-            weatherDesc = "under clear blue skies. The air is crisp and refreshing.";
-            break;
-        case "cloudy":
-            weatherDesc = "under a blanket of soft gray clouds. The light is diffused and gentle.";
-            break;
-        case "windy":
-            weatherDesc = "as a persistent breeze rustles through, carrying the scents of the countryside.";
-            break;
-        case "light rain":
-            weatherDesc = "through a gentle drizzle that creates a peaceful, rhythmic backdrop.";
-            break;
+    // Gwion update - show random message function
+    function showGwionMessage() {
+        gwionMessageActive = true;
+        
+        // Select random message
+        const randomIndex = Math.floor(Math.random() * gwionMessages.length);
+        const message = gwionMessages[randomIndex];
+        
+        // Create message element
+        const messageElement = document.createElement('div');
+        messageElement.className = 'gwion-message';
+        messageElement.textContent = message;
+        game.appendChild(messageElement);
+        
+        // Remove message after animation completes (2 seconds)
+        setTimeout(() => {
+            game.removeChild(messageElement);
+            gwionMessageActive = false;
+        }, 2000);
     }
     
-    textArea.innerHTML = `
-        <div class="narrative">
-            ${timeDesc} the small village square ${weatherDesc}
-            A faint smell of baked goods mingles with the sounds of daily life.
-            You are a wanderer, unable to speak, but your eyes are keen to observe and your hands ready to help.
-        </div>
-        <div class="thought">I wonder what stories this place holds...</div>
-    `;
-    
-    // Set button text
-    buttons[0].textContent = "Look around the square";
-    buttons[1].textContent = "Adjust your belongings";
-    buttons[2].textContent = "Take a moment to observe";
-    buttons[3].textContent = "Consider your journey";
-    
-    // Make all buttons active but only first has real function
-    buttons.forEach(button => {
-        button.disabled = false;
-        button.classList.remove("active-button");
-    });
-    
-    // Add active class to first button
-    buttons[0].classList.add("active-button");
-    
-    // Add event listeners
-    buttons[0].onclick = () => {
-        displayCurrentNPC();
-    };
-    
-    buttons[1].onclick = () => {
-        // Show inventory status
-        let inventoryText = "You check what you're carrying with you. ";
-        if (gameState.inventory.hasTool) inventoryText += "You have a small multi-tool that might come in handy. ";
-        if (gameState.inventory.hasHandkerchief) inventoryText += "A clean handkerchief is tucked in your pocket. ";
-        if (gameState.inventory.hasWaterSkin) inventoryText += "Your water skin is full and ready for use. ";
-        if (gameState.inventory.hasApple) inventoryText += "A shiny red apple looks appetizing. ";
-        if (!gameState.inventory.hasTool && !gameState.inventory.hasHandkerchief && !gameState.inventory.hasApple) 
-            inventoryText += "You travel light, with little more than the clothes on your back and your water skin.";
+    function gameOver() {
+        gameRunning = false;
+        finalScoreDisplay.textContent = score;
+        gameOverScreen.classList.remove('hidden');
         
-        textArea.innerHTML += `
-            <div class="narrative">
-                ${inventoryText}
-            </div>
-            <div class="thought">A wanderer learns to make do with what they have.</div>
-        `;
+        // Remove all lasers
+        lasers.forEach(laser => {
+            game.removeChild(laser.element);
+        });
+        lasers = [];
         
-        textArea.scrollTop = textArea.scrollHeight;
-    };
-    
-    buttons[2].onclick = () => {
-        // Show observation based on time and weather
-        let observationText;
-        if (gameState.timeOfDay === "morning") {
-            observationText = "The village is coming to life. Shopkeepers arrange their wares, children run to play, and the day's first meals are being prepared.";
-        } else if (gameState.timeOfDay === "afternoon") {
-            observationText = "The village hums with activity. People go about their business with purpose, exchanging greetings and conversations as they pass.";
-        } else {
-            observationText = "The village day is winding down. People move at a relaxed pace, finishing their tasks and preparing to return home for the evening.";
-        }
-        
-        if (gameState.weather === "windy") {
-            observationText += " The wind carries snippets of conversation and laughter throughout the square.";
-        } else if (gameState.weather === "light rain") {
-            observationText += " The light rain creates a gentle rhythm as it falls, and people hurry between dry spots.";
-        }
-        
-        textArea.innerHTML += `
-            <div class="narrative">
-                ${observationText}
-            </div>
-            <div class="thought">Each village has its own rhythm and character.</div>
-        `;
-        
-        textArea.scrollTop = textArea.scrollHeight;
-    };
-    
-    buttons[3].onclick = () => {
-        // Show thought about journey
-        const journeyThoughts = [
-            "How many villages have I passed through? Each one unique, yet similar in the needs of its people.",
-            "The road is long, but these moments of connection make the journey worthwhile.",
-            "Perhaps silence is not the burden I once thought it to be. It makes me observe more carefully.",
-            "Another village, another opportunity to make a difference, however small.",
-            "My feet may be weary, but my spirit is renewed by these brief encounters."
-        ];
-        
-        const randomThought = journeyThoughts[Math.floor(Math.random() * journeyThoughts.length)];
-        
-        textArea.innerHTML += `
-            <div class="narrative">
-                You take a moment to reflect on your travels and what brought you to this place.
-            </div>
-            <div class="thought">${randomThought}</div>
-        `;
-        
-        textArea.scrollTop = textArea.scrollHeight;
-    };
-}
-
-// Display current NPC
-function displayCurrentNPC() {
-    const npc = gameState.npcs[gameState.currentNPC];
-    
-    // Clear previous button event listeners
-    buttons.forEach(button => {
-        button.onclick = null;
-        button.classList.remove("active-button");
-        button.disabled = false;
-    });
-    
-    // If NPC has been visited already
-    if (npc.visited) {
-        displayFollowup();
-        return;
+        // Remove any active Gwion messages
+        const activeMessages = document.querySelectorAll('.gwion-message');
+        activeMessages.forEach(el => game.removeChild(el));
+        gwionMessageActive = false;
     }
     
-    // Add some environmental description based on time and weather
-    let environmentDesc = "";
-    
-    if (gameState.weather === "clear" && gameState.timeOfDay === "afternoon") {
-        environmentDesc = "The bright sunlight illuminates the scene clearly. ";
-    } else if (gameState.weather === "light rain") {
-        environmentDesc = "Light raindrops create a gentle patter around you. ";
-    } else if (gameState.weather === "windy" && gameState.timeOfDay === "evening") {
-        environmentDesc = "The evening breeze carries a slight chill as it swirls through the square. ";
-    }
-    
-    // Update text area with NPC description and environment
-    textArea.innerHTML = `
-        <div class="narrative">
-            As you walk through the village square, your attention is drawn to a figure nearby. ${environmentDesc}
-        </div>
-        <div class="npc-description">
-            ${npc.description}
-        </div>
-    `;
-    
-    // Set action buttons
-    const actions = npcActions[gameState.currentNPC];
-    actions.forEach((action, index) => {
-        buttons[index].textContent = action.text;
-        buttons[index].onclick = () => handleAction(index);
+    // Adjust canvas size on window resize
+    window.addEventListener('resize', () => {
+        const GAME_WIDTH = game.clientWidth;
+        const GAME_HEIGHT = game.clientHeight;
     });
-    
-    // Mark first non-rest action button as active
-    buttons[0].classList.add("active-button");
-}
-
-// Display followup for already visited NPC
-function displayFollowup() {
-    const npc = gameState.npcs[gameState.currentNPC];
-    const followupIndex = Math.min(npc.happiness - 1, 2);
-    
-    // Add variety with time and weather based descriptions
-    const timeIndex = Math.floor(Math.random() * 3);
-    const weatherIndex = Math.floor(Math.random() * 3);
-    
-    const timeDesc = timeBasedFollowup[gameState.timeOfDay][timeIndex];
-    const weatherDesc = weatherBasedFollowup[gameState.weather][weatherIndex];
+});
